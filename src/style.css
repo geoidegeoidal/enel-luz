@@ -1133,7 +1133,17 @@ h3 {
     width: auto;
     right: 22px;
   }
+  .lp-body {
+    max-height: calc(60vh - 140px);
+    overflow-y: auto;
+  }
+  #map-legend {
+    left: 22px;
+    right: 22px;
+    min-width: 0;
+  }
   .lp-basemaps {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
