@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Centro de control de cortes de energia - Enel Chile. Datos publicos, procesamiento 100% en tu navegador." />
+    <title>ENEL·LUZ — Centro de Control de Cortes</title>
+  </head>
+  <body>
+    <div id="top-strip"></div>
+    <div id="app">
+      <header id="masthead">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+          </span>
+          <span class="brand-lockup">
+            <span class="brand-name">ENEL·LUZ</span>
+            <span class="brand-sub">Centro de control de cortes</span>
+          </span>
+        </div>
+
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="2.4"/></svg>
+          <input id="search-input" type="text" autocomplete="off" spellcheck="false"
+                 placeholder="Buscar direccion en Santiago&hellip;" aria-label="Buscar direccion" />
+          <div id="search-results" role="listbox" aria-label="Resultados de busqueda"></div>
+        </div>
+
+        <button id="theme-toggle" type="button" aria-label="Cambiar tema"></button>
+        <div class="live-wrap" title="Hora local y fecha de publicacion de los datos Enel">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span class="live-label">EN&nbsp;VIVO</span>
+          <span id="local-clock" class="live-clock">&mdash;</span>
+          <span class="live-sep" aria-hidden="true"></span>
+          <span class="live-datos-label">DATOS</span>
+          <span id="estado-fecha" class="live-fecha">&mdash;</span>
+        </div>
+      </header>
+
+      <section id="kpi-band" aria-label="Indicadores clave">
+        <div id="kpis"></div>
+        <div id="refresh-bar" aria-hidden="true"><div id="refresh-fill"></div></div>
+      </section>
+
+      <main id="main">
+        <div id="map-wrap">
+          <div id="map"></div>
+          <div id="toolbar" aria-label="Capas y herramientas"></div>
+          <div id="draw-hint" class="hidden">
+            <span id="draw-hint-text"></span>
+            <button id="draw-cancel" type="button">Cancelar</button>
+          </div>
+          <div id="map-legend" class="hidden"></div>
+        </div>
+        <aside id="sidebar">
+          <section class="side-block" id="panel-analysis">
+            <h2 class="side-title"><span class="sq sq-cyan"></span>ANALISIS</h2>
+            <div id="analysis-tools" class="lp-tools" style="margin-bottom: 12px;"></div>
+            <div id="analysis-body"></div>
+          </section>
+          <section class="side-block" id="panel-charts">
+            <h2 class="side-title"><span class="sq sq-red"></span>PANORAMA</h2>
+            <div class="chart-block">
+              <h3 class="chart-title">Clientes afectados por comuna</h3>
+              <div class="chart tall" id="chart-comunas"></div>
+            </div>
+            <div class="chart-block">
+              <h3 class="chart-title">Inicios por hora <span class="legend-inline"><i class="sw sw-cyan"></i>avisos <i class="sw sw-orange"></i>incidencias</span></h3>
+              <div class="chart" id="chart-timeline"></div>
+            </div>
+            <div class="chart-duo">
+              <div class="chart-block">
+                <h3 class="chart-title">Estado de incidencias</h3>
+                <div class="chart" id="chart-estados"></div>
+              </div>
+              <div class="chart-block">
+                <h3 class="chart-title">Top por clientes</h3>
+                <div class="chart" id="chart-ranking"></div>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </main>
+
+      <footer id="footer">
+        <span>DATOS: GeoJSON publicos mapaemergencia.enel.com (espejo c/5 min) &middot; MAPA: &copy; OSM contributors / OpenMapTiles / OpenFreeMap &middot; GEOCODING: Photon</span>
+        <span>PROYECTO OPEN SOURCE NO OFICIAL &middot; SIN AFILIACION CON ENEL</span>
+      </footer>
+    </div>
+    <div id="toast" class="hidden" role="status"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

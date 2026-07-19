@@ -1,0 +1,27 @@
+{
+  "name": "enel-luz",
+  "private": false,
+  "version": "0.1.0",
+  "description": "Visor de control de mando de cortes de energia Enel Chile - 100% client-side, flat design",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "fetch-data": "node scripts/fetch-data.mjs"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-mono": "^5.2.7",
+    "@fontsource/ibm-plex-sans": "^5.2.8",
+    "@turf/turf": "^7.2.0",
+    "echarts": "^5.6.0",
+    "maplibre-gl": "^4.7.1"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.15",
+    "puppeteer-core": "^25.3.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7"
+  }
+}
