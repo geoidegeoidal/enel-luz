@@ -2,7 +2,7 @@
 import puppeteer from 'puppeteer-core'
 
 const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
-const OUT = 'C:\\Users\\Tokyotech\\AppData\\Local\\Temp\\opencode\\'
+const OUT = './assets/'
 
 const browser = await puppeteer.launch({
   executablePath: CHROME,
