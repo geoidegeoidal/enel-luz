@@ -48,9 +48,9 @@ Solución adoptada (decidida con el usuario): **espejo con GitHub Actions**.
 - `.github/workflows/update-data.yml`: cron `*/5 * * * *` (best-effort, GitHub
   puede atrasarlo; se desactiva tras 60 días sin actividad del repo → reactivar
   manualmente en Actions). Commit solo si hay cambios. **Costo $0 en repo público**.
-- `.github/workflows/deploy.yml`: build Vite → Pages en cada push a `main`,
-  con `paths-ignore: public/data/**` (los commits de datos NO disparan rebuild;
-  Pages sirve los archivos ya commiteados).
+- `.github/workflows/deploy.yml`: build Vite → Pages en cada push a `main`.
+  Los commits automáticos de datos SÍ deben disparar un rebuild completo porque GitHub
+  Pages sirve un artefacto estático (`dist/`) que debe recompilarse para incluir el nuevo JSON.
 
 ## Stack y estructura
 
@@ -119,6 +119,7 @@ genérica tipo "AI slop"** (fue rechazada explícitamente).
    puppeteer-core con esperas reales para verificar.
 8. Timestamp `datos` = **hora local Chile (UTC-4)**, no UTC. Enel republica
    cada pocos minutos.
+9. **GitHub Pages con Vite no se actualiza sin rebuild completo**: Originalmente se excluyó `public/data/**` en `deploy.yml` creyendo que GitHub Pages serviría los JSON sueltos. FALSO. Al usar un action para el deploy (`deploy-pages`), se sirve exclusivamente un artefacto (`dist/`) generado por Vite. Los cambios de datos *deben* disparar el deploy para que el artefacto resultante los incluya.
 
 ## Comandos
 
