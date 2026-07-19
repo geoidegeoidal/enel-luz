@@ -186,6 +186,7 @@ export function satelliteStyle(): StyleSpecification {
   return {
     version: 8,
     name: 'enel-luz-satellite',
+    glyphs: GLYPHS,
     sources: {
       sat: {
         type: 'raster',
