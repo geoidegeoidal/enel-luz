@@ -3,8 +3,6 @@ name: deploy-pages
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - 'public/data/**' # los commits de datos no disparan rebuild
   workflow_dispatch:
 
 permissions:
