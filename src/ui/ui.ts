@@ -17,6 +17,7 @@ const I = {
     '<svg viewBox="0 0 24 24" fill="none"><path d="m6 15 6-6 6 6" stroke="currentColor" stroke-width="2.5"/></svg>',
   sun: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.5" fill="currentColor" stroke="none"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.5 4.5l2 2M17.5 17.5l2 2M19.5 4.5l-2 2M6.5 17.5l-2 2" stroke="currentColor" stroke-width="2"/></svg>',
   moon: '<svg viewBox="0 0 24 24" fill="none"><path d="M20 13.5A8.5 8.5 0 0 1 10.5 4 8.5 8.5 0 1 0 20 13.5z" fill="currentColor" stroke="none"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="5.5" stroke="currentColor" stroke-width="2"/><path d="m19 19-4.5-4.5" stroke="currentColor" stroke-width="2"/></svg>',
 } as const
 
 /* ---------------- Panel de capas (estilo kepler.gl) ---------------- */
@@ -99,22 +100,27 @@ export function buildToolbar(el: HTMLElement, h: ToolbarHandlers): void {
 
 export function buildAnalysisTools(el: HTMLElement, h: ToolbarHandlers): void {
   el.innerHTML = `
-    <button type="button" class="tb-btn" data-tool="radio" title="Click en el mapa: cuenta avisos, incidencias y clientes en un radio de 500 m">${I.radio}Radio</button>
-    <button type="button" class="tb-btn" data-tool="poly" title="Dibuja un poligono: filtra mapa y graficos a esa zona">${I.poly}Filtro zona</button>
-    <button type="button" class="tb-btn" data-tool="nearest" title="Click en el mapa: encuentra la incidencia mas proxima con distancia y ETA">${I.nearest}Mas cercana</button>
-    <button type="button" class="tb-btn" data-clear title="Quita overlays, filtro espacial y resultados">${I.clear}Limpiar</button>
+    <button type="button" class="tb-btn tb-search" data-tool="search" title="Busca una direccion arriba para saber si esta afectada y su ETA de reposicion">${I.search}Dirección</button>
+    <button type="button" class="tb-btn tb-radio" data-tool="radio" title="Click en el mapa: cuenta avisos, incidencias y clientes en un radio de 500 m">${I.radio}Radio</button>
+    <button type="button" class="tb-btn tb-poly" data-tool="poly" title="Dibuja un poligono: filtra mapa y graficos a esa zona">${I.poly}Filtro zona</button>
+    <button type="button" class="tb-btn tb-nearest" data-tool="nearest" title="Click en el mapa: encuentra la incidencia mas proxima con distancia y ETA">${I.nearest}Mas cercana</button>
+    <button type="button" class="tb-btn tb-clear" data-clear title="Quita overlays, filtro espacial y resultados">${I.clear}Limpiar</button>
   `
+  el.querySelector('[data-tool="search"]')!.addEventListener('click', () => {
+    document.getElementById('search-input')?.focus()
+  })
   el.querySelector('[data-tool="radio"]')!.addEventListener('click', h.onToolRadio)
   el.querySelector('[data-tool="poly"]')!.addEventListener('click', h.onToolPoly)
   el.querySelector('[data-tool="nearest"]')!.addEventListener('click', h.onToolNearest)
   el.querySelector('[data-clear]')!.addEventListener('click', h.onClearAnalysis)
 
   /* hover -> describir herramienta en el panel derecho */
-  for (const tool of ['radio', 'poly', 'nearest'] as const) {
-    const btn = el.querySelector(`[data-tool="${tool}"]`)!
-    btn.addEventListener('mouseenter', () => h.onToolHover(tool))
+  for (const tool of ['search', 'radio', 'poly', 'nearest'] as const) {
+    const btn = el.querySelector(`[data-tool="${tool}"]`)
+    if (!btn) continue
+    btn.addEventListener('mouseenter', () => h.onToolHover(tool as any))
     btn.addEventListener('mouseleave', () => h.onToolHover(null))
-    btn.addEventListener('focus', () => h.onToolHover(tool))
+    btn.addEventListener('focus', () => h.onToolHover(tool as any))
     btn.addEventListener('blur', () => h.onToolHover(null))
   }
 }
@@ -168,7 +174,7 @@ export const EMPTY_ANALYSIS_HTML = `
 
 /** Resalta la fila de la guia asociada a una herramienta (hover/armado) */
 export function highlightGuideRow(tool: string | null, active = false): void {
-  for (const id of ['eg-radio', 'eg-poly', 'eg-nearest']) {
+  for (const id of ['eg-search', 'eg-radio', 'eg-poly', 'eg-nearest']) {
     document.getElementById(id)?.classList.remove('eg-highlight')
     if (!active) document.getElementById(id)?.classList.remove('eg-active')
   }

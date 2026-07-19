@@ -617,6 +617,10 @@ h3 {
   padding: 5px 8px;
   font-size: 12px;
   font-weight: 500;
+  transition: opacity 0.15s ease;
+}
+.tb-btn:hover {
+  opacity: 0.85;
 }
 .tb-btn svg {
   width: 13px;
@@ -624,6 +628,29 @@ h3 {
   fill: currentColor;
   stroke: currentColor;
   flex: none;
+}
+.tb-btn.tb-search {
+  background-color: var(--ink);
+  border-color: var(--ink);
+  color: var(--panel);
+}
+.tb-btn.tb-radio {
+  background-color: var(--cyan);
+  border-color: var(--cyan);
+  color: var(--ink);
+}
+.tb-btn.tb-poly {
+  background-color: var(--amber);
+  border-color: var(--amber);
+  color: var(--ink);
+}
+.tb-btn.tb-nearest {
+  background-color: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+.tb-btn.tb-clear {
+  /* Default panel background, just normal button style */
 }
 
 /* Hint de dibujo */
