@@ -772,6 +772,9 @@ h3 {
 }
 .sw-cyan { background-color: var(--cyan); }
 .sw-orange { background-color: var(--orange); }
+.sw-green { background-color: var(--green); }
+.sw-amber { background-color: var(--amber); }
+.sw-red { background-color: var(--red); }
 
 .chart {
   width: 100%;

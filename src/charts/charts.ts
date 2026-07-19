@@ -4,7 +4,7 @@ import { GridComponent, TooltipComponent, MarkLineComponent } from 'echarts/comp
 import { CanvasRenderer } from 'echarts/renderers'
 import type { EChartsCoreOption } from 'echarts/core'
 import type { Feature } from 'geojson'
-import { theme, ui } from '../theme'
+import { theme, ui, severityColor } from '../theme'
 import {
   AppData,
   Kpis,
@@ -91,14 +91,7 @@ export function initComunaChart(el: HTMLElement, ctx: ChartCtx) {
           data: rows.map((r) => ({
             value: r.afectados,
             itemStyle: {
-              color:
-                r.pct >= 15
-                  ? theme.danger
-                  : r.pct >= 5
-                    ? theme.orange
-                    : r.pct >= 1
-                      ? theme.amber
-                      : ui.ink,
+              color: severityColor(r.pct),
             },
           })),
           barMaxWidth: 13,
