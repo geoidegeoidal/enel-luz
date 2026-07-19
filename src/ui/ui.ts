@@ -96,6 +96,11 @@ export function buildToolbar(el: HTMLElement, h: ToolbarHandlers): void {
       h.onBasemap(btn.dataset.bm as BasemapMode)
     })
   })
+
+  /* auto-collapse on mobile */
+  if (window.innerWidth <= 768) {
+    el.classList.add('collapsed')
+  }
 }
 
 export function buildAnalysisTools(el: HTMLElement, h: ToolbarHandlers): void {
