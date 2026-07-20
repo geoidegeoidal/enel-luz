@@ -34,12 +34,12 @@ export interface ToolbarHandlers {
   onToolHover: (tool: 'radio' | 'poly' | 'nearest' | null) => void
 }
 
-const LAYER_ROWS: Array<{ g: ToggleableLayer | 'hexbin'; label: string; color: string }> = [
-  { g: 'comunas', label: 'Comunas', color: theme.green },
-  { g: 'trafos', label: 'Incidencias', color: layerColors.trafos },
-  { g: 'descargos', label: 'Descargos', color: layerColors.descargos },
-  { g: 'avisos', label: 'Avisos', color: layerColors.avisos },
-  { g: 'hexbin', label: 'Densidad', color: layerColors.hexbin[1] },
+const LAYER_ROWS: Array<{ g: ToggleableLayer | 'hexbin'; label: string; desc: string; color: string }> = [
+  { g: 'comunas', label: 'Comunas', desc: 'clientes sin luz (en vivo)', color: theme.green },
+  { g: 'trafos', label: 'Incidencias', desc: 'cortes confirmados (red BT)', color: layerColors.trafos },
+  { g: 'descargos', label: 'Descargos', desc: 'fallas masivas (red MT)', color: layerColors.descargos },
+  { g: 'avisos', label: 'Avisos', desc: 'reportes de usuarios', color: layerColors.avisos },
+  { g: 'hexbin', label: 'Densidad', desc: 'concentración espacial', color: layerColors.hexbin[1] },
 ]
 
 export function buildToolbar(el: HTMLElement, h: ToolbarHandlers): void {
@@ -55,7 +55,10 @@ export function buildToolbar(el: HTMLElement, h: ToolbarHandlers): void {
           (r) => `
           <div class="lp-layer ${r.g === 'hexbin' ? 'off' : ''}" data-row="${r.g}">
             <span class="lp-sw" style="background-color:${r.color}"></span>
-            <span class="lp-name">${r.label}</span>
+            <div class="lp-info">
+              <span class="lp-name">${r.label}</span>
+              <span class="lp-desc">${r.desc}</span>
+            </div>
             <span class="lp-count mono" data-count="${r.g}"></span>
             <button type="button" class="lp-eye" data-eye="${r.g}" aria-label="Mostrar u ocultar ${r.label}" aria-pressed="${r.g !== 'hexbin'}">
               <span class="eye-on">${I.eye}</span><span class="eye-off">${I.eyeOff}</span>

@@ -509,10 +509,25 @@ h3 {
   border-color: var(--line-soft);
   background-color: var(--paper);
 }
-.lp-layer.off .lp-name,
+.lp-layer.off .lp-info,
 .lp-layer.off .lp-count,
 .lp-layer.off .lp-sw {
   opacity: 0.35;
+}
+.lp-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+}
+.lp-name {
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.lp-desc {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--ink-2);
 }
 .lp-sw {
   width: 12px;
