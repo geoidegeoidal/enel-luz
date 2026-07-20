@@ -205,17 +205,17 @@ export function toast(msg: string, ms = 3200): void {
 
 /* ---------------- Leyenda contextual (escala graduada) ---------------- */
 
-export type LegendMode = 'comuna' | 'hexbin' | null
+export type LegendMode = 'comuna' | 'hexbin'
 
-export function buildLegend(el: HTMLElement, mode: LegendMode): void {
-  if (!mode) {
+export function buildLegend(el: HTMLElement, modes: LegendMode[]): void {
+  if (!modes || modes.length === 0) {
     el.classList.add('hidden')
     el.innerHTML = ''
     return
   }
 
-  const steps =
-    mode === 'comuna'
+  const allSteps = modes.map((mode) => {
+    return mode === 'comuna'
       ? {
           title: 'COMUNAS · % CLIENTES AFECTADOS',
           items: [
@@ -234,15 +234,19 @@ export function buildLegend(el: HTMLElement, mode: LegendMode): void {
             { c: layerColors.hexbin[3], l: '20+' },
           ],
         }
+  })
 
-  el.innerHTML = `
-    <div class="lg-title">${steps.title}</div>
-    <div class="lg-strip">
-      ${steps.items
-        .map(
-          (i) => `<div class="lg-step"><span class="lg-block" style="background-color:${i.c}"></span><span class="lg-lab">${i.l}</span></div>`,
-        )
-        .join('')}
-    </div>`
+  el.innerHTML = allSteps.map(steps => `
+    <div class="lg-group">
+      <div class="lg-title">${steps.title}</div>
+      <div class="lg-strip">
+        ${steps.items
+          .map(
+            (i) => `<div class="lg-step"><span class="lg-block" style="background-color:${i.c}"></span><span class="lg-lab">${i.l}</span></div>`,
+          )
+          .join('')}
+      </div>
+    </div>
+  `).join('')
   el.classList.remove('hidden')
 }

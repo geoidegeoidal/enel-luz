@@ -702,6 +702,12 @@ h3 {
   padding: 10px 12px;
   min-width: 190px;
 }
+#map-legend .lg-group {
+  margin-bottom: 12px;
+}
+#map-legend .lg-group:last-child {
+  margin-bottom: 0;
+}
 #map-legend .lg-title {
   font-weight: 700;
   letter-spacing: 0.1em;

@@ -157,7 +157,10 @@ function restoreMapState(): void {
 }
 
 function refreshLegend(): void {
-  buildLegend($('map-legend'), hexOn ? 'hexbin' : layerState.comunas ? 'comuna' : null)
+  const modes: LegendMode[] = []
+  if (hexOn) modes.push('hexbin')
+  if (layerState.comunas) modes.push('comuna')
+  buildLegend($('map-legend'), modes)
 }
 
 /* ------------------------------------------------------------------ */
