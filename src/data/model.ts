@@ -79,9 +79,8 @@ export function computeKpis(data: AppData): Kpis {
     clientesAfectados += propNum(f, 'CLIENTESAFECTADOS')
     clientesTotales += propNum(f, 'CLIENTESTOTAL')
   }
-  const incidencias =
-    data.trafos.features.filter((f) => propStr(f, 'TIPO').startsWith('TRAFO')).length +
-    data.descargos.features.length
+  const allInc = allIncidencias(data)
+  const incidencias = new Set(allInc.map(incidenciaId).filter(Boolean)).size
   return {
     clientesAfectados,
     clientesTotales,

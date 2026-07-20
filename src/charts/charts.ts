@@ -136,7 +136,13 @@ export function initTimelineChart(el: HTMLElement) {
       buckets.get(k)![kind]++
     }
     avisos.forEach((f) => bump(parseFecha(propStr(f, 'FECHA_INI')), 'avisos'))
-    incidencias.forEach((f) => bump(parseFecha(propStr(f, 'FECHA_INICIO')), 'incidencias'))
+    
+    const uniqueInc = new Map<string, Feature>()
+    incidencias.forEach((f) => {
+      const id = incidenciaId(f)
+      if (id && !uniqueInc.has(id)) uniqueInc.set(id, f)
+    })
+    Array.from(uniqueInc.values()).forEach((f) => bump(parseFecha(propStr(f, 'FECHA_INICIO')), 'incidencias'))
 
     const ordered = [...buckets.entries()].sort((a, b) => a[1].sort - b[1].sort).slice(-24)
     chart.setOption({
@@ -197,7 +203,12 @@ export function initEstadosChart(el: HTMLElement) {
 
   const update = (incidencias: Feature[]) => {
     const counts = new Map<string, number>()
+    const uniqueInc = new Map<string, Feature>()
     incidencias.forEach((f) => {
+      const id = incidenciaId(f)
+      if (id && !uniqueInc.has(id)) uniqueInc.set(id, f)
+    })
+    Array.from(uniqueInc.values()).forEach((f) => {
       const e = propStr(f, 'ESTADOINC') || 'Sin estado'
       counts.set(e, (counts.get(e) ?? 0) + 1)
     })
@@ -261,7 +272,7 @@ export function initRankingChart(el: HTMLElement, ctx: ChartCtx) {
     for (const f of incidencias) {
       const id = incidenciaId(f)
       if (!id) continue
-      byId.set(id, (byId.get(id) ?? 0) + propNum(f, 'CLITOTAL'))
+      byId.set(id, Math.max(byId.get(id) ?? 0, propNum(f, 'CLITOTAL')))
     }
     const rows = [...byId.entries()]
       .map(([id, clientes]) => ({ id, clientes }))

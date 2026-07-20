@@ -111,7 +111,7 @@ genérica tipo "AI slop"** (fue rechazada explícitamente).
    NO volver a adjuntarlos: flag `attachHandlers`).
 4. **OpenMapTiles no tiene source-layer `globallandcover`** (schema Mapbox) —
    usar `landuse`, `water`, `transportation`, `boundary`, `place`, `building`.
-5. **`INCIDENCIA` duplicado entre trafos** → agregar antes de rankear.
+5. **`INCIDENCIA` duplicado entre trafos**: Un evento genera múltiples polígonos. **NO SUMAR `CLITOTAL`** entre ellos, porque ese campo ya trae el total del evento; usar `Math.max` o deduplicar por ID para gráficos y KPIs o se inflarán masivamente las cifras.
 6. **Especificidad CSS**: la clase `.active` genérica de `button` ensuciaba los
    thumbnails de basemap → backgrounds explícitos.
 7. **`headless=new` + `--virtual-time-budget` NO espera tiles ni WebGL** → los
