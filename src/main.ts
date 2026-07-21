@@ -56,6 +56,7 @@ import {
   updateLayerCounts,
   setPanelHexbin,
   highlightGuideRow,
+  type LegendMode,
 } from './ui/ui'
 
 applyTheme()
@@ -292,23 +293,91 @@ function refreshViews(): void {
 /* ------------------------------------------------------------------ */
 const POLL_S = 60
 let countdown = POLL_S
+let lastPollAt = 0
+let pollErrors = 0
+let pollTimer: ReturnType<typeof setInterval> | undefined
 
-async function tickRefresh(): Promise<void> {
+async function tickRefresh({ manual = false } = {}): Promise<void> {
   const data = store.state.data
   if (!data) return
+  if (!manual) lastPollAt = Date.now()
+  const btn = $('refresh-now')
+  if (manual && btn) btn.classList.add('loading')
   try {
     const fresh = await reloadIfChanged(data.estado.datos)
     countdown = POLL_S
+    pollErrors = 0
     if (fresh) {
       applyNewData(fresh)
       const fill = $('refresh-fill')
       fill.classList.add('flash')
       setTimeout(() => fill.classList.remove('flash'), 2000)
-      toast(`Datos actualizados: ${fresh.estado.datos}`)
+      toast(`Datos actualizados \u2713 \u2014 ${fresh.estado.datos}`, 3200)
+      if (btn) {
+        btn.classList.add('success')
+        setTimeout(() => btn.classList.remove('success'), 1500)
+      }
+    } else if (manual) {
+      toast('Datos ya estan al dia', 1800)
     }
-  } catch {
-    /* silencioso: se reintenta en el proximo ciclo */
+  } catch (err) {
+    pollErrors++
+    if (pollErrors >= 3) {
+      toast(`Sin conexion al espejo (${pollErrors} intentos fallidos)`, 4500)
+    }
+    if (manual) toast('No se pudo actualizar: revise conexion', 3000)
+    console.warn('[tickRefresh]', err)
+  } finally {
+    if (btn) btn.classList.remove('loading')
   }
+}
+
+function fmtFreshness(diffMs: number): string {
+  const s = Math.max(0, Math.round(diffMs / 1000))
+  if (s < 60) return `hace ${s}s`
+  const m = Math.floor(s / 60)
+  if (m < 60) return `hace ${m}m ${String(s % 60).padStart(2, '0')}s`
+  const h = Math.floor(m / 60)
+  return `hace ${h}h ${m % 60}m`
+}
+
+function updateFreshness(): void {
+  const data = store.state.data
+  const el = $('datos-freshness')
+  if (!data?.estado?.fetchedAt || !el) return
+  const fetched = new Date(data.estado.fetchedAt).getTime()
+  if (!Number.isFinite(fetched)) return
+  const diff = Date.now() - fetched
+  el.textContent = fmtFreshness(diff)
+  const dtMin = diff / 60000
+  el.classList.toggle('fresh', dtMin < 2)
+  el.classList.toggle('stale', dtMin > 7)
+}
+
+function startPolling(): void {
+  if (pollTimer) return
+  pollTimer = setInterval(() => {
+    tickClock()
+    if (!document.hidden) countdown--
+    if (countdown <= 0) void tickRefresh()
+    const fill = $('refresh-fill')
+    if (fill) fill.style.width = `${Math.max(0, (countdown / POLL_S) * 100)}%`
+    if (!document.hidden) updateFreshness()
+  }, 1000)
+}
+
+function tickClock(): void {
+  const clock = $('local-clock')
+  if (!clock) return
+  const p = (n: number) => String(n).padStart(2, '0')
+  const now = new Date()
+  clock.textContent = `${p(now.getHours())}:${p(now.getMinutes())}:${p(now.getSeconds())}`
+}
+
+function stopPolling(): void {
+  if (!pollTimer) return
+  clearInterval(pollTimer)
+  pollTimer = undefined
 }
 
 function applyNewData(data: AppData): void {
@@ -321,6 +390,7 @@ function applyNewData(data: AppData): void {
   renderKpis($('kpis'), computeKpis(data))
   updateLayerCounts($('toolbar'), data)
   refreshViews()
+  updateFreshness()
 }
 
 /* ------------------------------------------------------------------ */
@@ -440,21 +510,30 @@ async function boot(): Promise<void> {
     refreshViews()
   })
 
-  /* Reloj local + poll de datos nuevos con barra de progreso */
-  const fill = $('refresh-fill')
-  const clock = $('local-clock')
-  const tickClock = () => {
-    const p = (n: number) => String(n).padStart(2, '0')
-    const now = new Date()
-    clock.textContent = `${p(now.getHours())}:${p(now.getMinutes())}:${p(now.getSeconds())}`
-  }
+  /* Reloj local, polling con pausa en background, freshness marker y boton manual */
   tickClock()
-  setInterval(() => {
-    tickClock()
-    countdown--
-    if (countdown <= 0) void tickRefresh()
-    fill.style.width = `${Math.max(0, (countdown / POLL_S) * 100)}%`
-  }, 1000)
+  updateFreshness()
+  startPolling()
+
+  /* Al volver al tab, refresh inmediato si hace >5s del ultimo poll + restart del reloj */
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopPolling()
+    } else {
+      tickClock()
+      updateFreshness()
+      if (Date.now() - lastPollAt > 5000) {
+        lastPollAt = Date.now()
+        void tickRefresh()
+      }
+      startPolling()
+    }
+  })
+
+  /* Botón manual: refresh explicito sin esperar al tick */
+  $('refresh-now').addEventListener('click', () => {
+    void tickRefresh({ manual: true })
+  })
 }
 
 boot().catch((err) => {

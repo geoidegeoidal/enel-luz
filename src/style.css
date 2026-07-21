@@ -265,6 +265,37 @@ h3 {
   width: 17px;
   height: 17px;
 }
+#refresh-now {
+  border: 1px solid #3a3a36;
+  background-color: transparent;
+  color: #d8d5cb;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#refresh-now:hover {
+  background-color: #f2f0e9;
+  color: #141414;
+  border-color: #f2f0e9;
+}
+#refresh-now svg {
+  width: 17px;
+  height: 17px;
+  transition: transform 0.35s ease-out;
+}
+#refresh-now.loading svg {
+  animation: spin 0.85s linear infinite;
+}
+#refresh-now.success {
+  color: #7fd49b;
+  border-color: #7fd49b;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
 .live-wrap {
   display: flex;
@@ -318,6 +349,15 @@ h3 {
   font-weight: 600;
   color: #d8d5cb;
 }
+.live-freshness {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: #6e6e64;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.live-freshness.fresh { color: #7fd49b; }
+.live-freshness.stale { color: #ffb000; }
 
 /* ---------------- Banda KPI ---------------- */
 #kpi-band {

@@ -2,6 +2,11 @@
 
 > Este archivo documenta qué es el proyecto, cómo funciona end-to-end, qué se
 > decidió y por qué, y las trampas ya resueltas. Léelo completo antes de tocar código.
+>
+> **Continuidad cross-session**: leyó `HANDOFF.md` (en este repo) antes de
+> tocar código. Contiene estado de la última sesión, pendientes, bloqueantes
+> y próximos pasos. Sin él, perdés contexto entre sesiones. Actualizálo al
+> final de cada sesión de trabajo.
 
 ## Qué es esto
 
