@@ -20,6 +20,7 @@ import {
   enelHourStart,
   fmtEnelHour,
   fmtEnelDayHour,
+  aggregateComunas,
   type OperationalIndicators,
 } from '../data/model'
 
@@ -82,12 +83,12 @@ export function initComunaChart(el: HTMLElement, ctx: ChartCtx) {
   })
 
   const update = (comunas: Feature[]) => {
-    const rows = comunas
-      .map((f) => ({
-        nombre: propStr(f, 'COMUNA'),
-        display: prettyName(propStr(f, 'COMUNA')),
-        afectados: propNum(f, 'CLIENTESAFECTADOS'),
-        pct: propNum(f, 'PORCENTAJE'),
+    const rows = aggregateComunas(comunas)
+      .map((comuna) => ({
+        nombre: comuna.nombre,
+        display: prettyName(comuna.nombre),
+        afectados: comuna.clientesAfectados,
+        pct: comuna.porcentaje,
       }))
       .sort((a, b) => b.afectados - a.afectados)
       .slice(0, 12)
@@ -202,6 +203,7 @@ export function initTimelineChart(el: HTMLElement) {
       },
       yAxis: {
         type: 'value',
+        minInterval: 1,
         axisLabel: axisText(),
         splitLine: splitLine(),
         axisLine: axisLine(),

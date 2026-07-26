@@ -17,26 +17,85 @@
 
 ## Sesión actual / próxima
 
-**Estado**: paquete de inteligencia operacional implementado y validado el
-2026-07-26 sobre `origin/main` en `ff8a671`: cross-filter real por comuna y
-polígono, reloj operativo ±12 h, escala de reposición y seis indicadores de
-presión/edad/ETA. La revisión independiente posterior quedó incorporada:
-fuentes del mapa recortadas al alcance, intersección geométrica exacta,
-eventos únicos separados de polígonos, hora `America/Santiago`, percentiles
-interpolados, actualización temporal por minuto y tooltips seguros.
+**Estado**: el reporte operativo RM/comuna exportable a PDF quedó validado y su
+publicación directa en `main` fue autorizada por el usuario. El lenguaje visual se
+guardó en `.interface-design/system.md`. La plantilla usa dos páginas A4
+apaisadas, mapa SVG operacional, KPIs, indicadores, reloj ±12 h, escala ETA,
+tablas de prioridad, timestamp, frescura y nota metodológica. Tras feedback del
+usuario se elevó la escala tipográfica y el mapa ahora superpone incidencias
+activas como rombos naranjas y avisos como puntos cian, con leyenda cuantificada.
 
-**Validación final**: Vitest 11/11, `tsc --noEmit`, build Vite y smoke E2E
-completo con Chrome. Capturas de escritorio regeneradas. Los archivos no
-versionados preexistentes del usuario (`assets/mobile_*.png` y
-`preview-err.log`) se conservaron fuera del commit.
+Durante la revisión PDF se detectó que Enel puede publicar varias geometrías con
+el mismo nombre de comuna (caso COLINA). El cross-filter, los KPIs, el ranking y
+el reporte ahora combinan todas las geometrías, suman clientes afectados y usan
+`CLIENTESTOTAL` una sola vez.
 
-**Próximo paso al retomar**: comprobar el estado del workflow de Pages del
-commit de producto si aún estuviera ejecutándose. Después no quedan pendientes
-funcionales conocidos de esta sesión.
+**Validación final**: Vitest 17/17, `tsc --noEmit`, build Vite y smoke E2E con
+reportes RM/comuna. Se generaron y revisaron visualmente cuatro páginas reales:
+`output/pdf/enel-luz-reporte-rm.pdf` y
+`output/pdf/enel-luz-reporte-colina.pdf`; ambos tienen 2 páginas A4 apaisadas
+sin recortes ni solapamientos.
+
+**Próximo paso al retomar**: verificar el último deploy de Pages y el reporte en
+producción. La recomendación para el aviso Node 20 de Actions es
+actualizar `checkout`/`setup-node` y el build a Node 24 en un cambio separado;
+mantener las majors oficiales actuales de las actions de Pages hasta que GitHub
+publique reemplazos Node 24. No se modificó el workflow en esta sesión.
 
 ---
 
 ## Historial de sesiones
+
+### 2026-07-26 — Legibilidad y mapa operacional del reporte
+
+**Objetivo**: corregir la tipografía demasiado pequeña y convertir el mapa
+coroplético en una vista útil para diagnóstico.
+
+**Hecho**:
+- Cuerpo, tablas, metadatos y etiquetas SVG aumentados manteniendo la retícula.
+- Incidencias activas deduplicadas representadas con contorno y rombo naranja.
+- Avisos individuales representados como puntos cian con borde blanco.
+- Leyenda territorial separa severidad, incidencias y avisos con conteos.
+- El patrón quedó persistido en `.interface-design/system.md`.
+
+**Validación**:
+- Vitest 17/17, `tsc --noEmit`, build Vite y smoke E2E: OK.
+- PDF RM y COLINA regenerados; sus cuatro páginas finales fueron renderizadas a
+  PNG e inspeccionadas sin recortes, solapamientos ni texto ilegible.
+
+### 2026-07-26 — Sistema visual + reporte PDF RM/comuna
+
+**Objetivo**: persistir el lenguaje visual y crear un reporte regional o comunal
+exportable a PDF, cuidando diseño, semántica y fidelidad de datos.
+
+**Hecho**:
+- Sistema visual documentado con dirección, tokens, retícula, profundidad,
+  patrones de dashboard/reporte y controles de calidad.
+- Botón `REPORTE PDF` integrado al alcance operativo; usa RM, comuna o área
+  dibujada activa sin backend.
+- Vista previa accesible con dos páginas A4 apaisadas y acción
+  `IMPRIMIR / GUARDAR PDF`.
+- Primera página: identidad, metadatos, KPIs, mapa vectorial de severidad,
+  lectura ejecutiva e indicadores operativos.
+- Segunda página: reloj centrado en AHORA, escala ETA, eventos prioritarios,
+  comunas con mayor impacto y metodología.
+- Script reproducible `scripts/report-pdf.mjs` para generar muestras con Chrome.
+- Comunas multi-geometría agregadas correctamente en mapa, filtros, KPIs,
+  gráfico de impacto y reporte.
+
+**Validación**:
+- `npm test`: 5 archivos, 17/17 pruebas OK.
+- `tsc --noEmit`: OK.
+- `npm run build`: OK.
+- Smoke E2E: reporte RM y comunal, dos páginas, mapa SVG y acción PDF OK.
+- PDF RM y COLINA reabiertos, validados como 2 páginas 841.9 x 595 pt y
+  renderizados a PNG para inspección visual.
+
+**Cambios de repo**:
+- Cambios locales pendientes sin commit.
+- `output/` y `tmp/` ignorados; muestras PDF se conservan localmente para
+  entrega, no para versionado.
+- `assets/mobile_*.png` y `preview-err.log` permanecen intactos.
 
 ### 2026-07-26 — Inteligencia operacional + cross-filter
 

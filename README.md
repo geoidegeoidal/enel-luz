@@ -47,6 +47,30 @@ serie histórica de eventos ya cerrados.
 
 <img src="assets/final_charts.png" width="800" alt="Gráficos y Estadísticas">
 
+### 4. Reporte operativo PDF
+
+El control **REPORTE PDF** genera una vista editorial de dos páginas sobre el
+alcance activo:
+
+- En vista RM, resume la situación regional completa.
+- Al seleccionar una comuna desde el mapa o el gráfico de impacto, genera el
+  reporte comunal incluyendo todas las geometrías publicadas para ese nombre.
+- Si existe un polígono dibujado, conserva también ese recorte espacial.
+
+La primera página reúne KPIs, frescura e indicadores operativos. Su mapa combina
+severidad comunal, incidencias activas como rombos naranjas y avisos de clientes
+como puntos cian, todos filtrados por el alcance. La segunda contiene el reloj
+±12 h, escala ETA, eventos prioritarios, impacto comunal y metodología.
+**IMPRIMIR / GUARDAR PDF** abre el diálogo del navegador para imprimir o elegir
+“Guardar como PDF”; no se envían datos a ningún servidor.
+
+Para verificar la plantilla desde desarrollo, con `npm run preview` activo:
+
+```bash
+node scripts/report-pdf.mjs http://localhost:4173/ RM output/pdf/reporte-rm.pdf
+node scripts/report-pdf.mjs http://localhost:4173/ COLINA output/pdf/reporte-colina.pdf
+```
+
 ---
 
 ## Arquitectura

@@ -19,6 +19,7 @@ import {
   allIncidencias,
   incidenciaId,
   dedupeIncidencias,
+  aggregateComunas,
   prettyName,
 } from './data/model'
 import { store } from './state'
@@ -51,6 +52,7 @@ import {
   analyzePoint,
   bufferStats,
   nearestIncidencia,
+  comunaScopeFeature,
   type VisibleData,
 } from './geo/analysis'
 import { buildHexbin } from './geo/hexbin'
@@ -67,6 +69,7 @@ import {
   highlightGuideRow,
   type LegendMode,
 } from './ui/ui'
+import { openOperationalReport } from './report/report'
 
 applyTheme()
 
@@ -318,7 +321,7 @@ function refreshViews(): void {
   renderScopeContext(
     dedupeIncidencias(visible.incidencias).length,
     visible.avisos.length,
-    visible.comunas.length,
+    kpis.comunasAfectadas,
   )
   if (charts) updateAllCharts(charts, data, visible)
 }
@@ -520,7 +523,7 @@ async function boot(): Promise<void> {
             trafos: lastVisible.trafos.length,
             descargos: lastVisible.descargos.length,
             eventos: dedupeIncidencias(lastVisible.incidencias).length,
-            comunas: lastVisible.comunas.length,
+            comunas: aggregateComunas(lastVisible.comunas).length,
           }
         : null,
     })
@@ -572,6 +575,18 @@ async function boot(): Promise<void> {
     store.set({ selectedComuna: null, filterPoly: null })
     toast('Vista restaurada a toda la RM')
   })
+  $('report-open').addEventListener('click', () => {
+    const current = store.state.data
+    if (!current) return toast('Datos aun no disponibles')
+    const visible =
+      lastVisible ??
+      computeVisible(current, store.state.filterPoly, store.state.selectedComuna)
+    openOperationalReport({
+      data: current,
+      visible,
+      scopeLabel: $('scope-label').textContent?.trim() || 'RM',
+    })
+  })
 
   /* Toggle claro/oscuro del chrome */
   buildThemeToggle($('theme-toggle'), () => {
@@ -587,7 +602,7 @@ async function boot(): Promise<void> {
       if (map) {
         highlightComuna(map, s.selectedComuna)
         if (s.selectedComuna && s.data) {
-          const f = s.data.comunas.features.find((c) => propStr(c, 'COMUNA') === s.selectedComuna)
+          const f = comunaScopeFeature(s.data, s.selectedComuna)
           if (f) flyToFeature(map, f)
         }
       }

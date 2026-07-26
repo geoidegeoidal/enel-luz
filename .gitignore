@@ -5,3 +5,5 @@ dist
 .vscode
 preview.log
 scripts/smoke.png
+tmp/
+output/

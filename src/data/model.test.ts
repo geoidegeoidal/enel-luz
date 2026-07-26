@@ -132,4 +132,36 @@ describe('indicadores operativos', () => {
     expect(result.clientesAfectados).toBe(150)
     expect(computeKpis(data).descargos).toBe(1)
   })
+
+  it('agrega geometrias repetidas de una comuna sin duplicar su universo de clientes', () => {
+    const duplicatedComunas = [
+      polygon({
+        COMUNA: 'COLINA',
+        CLIENTESAFECTADOS: '10',
+        CLIENTESTOTAL: '58817',
+        PORCENTAJE: '0.017',
+      }),
+      polygon({
+        COMUNA: 'COLINA',
+        CLIENTESAFECTADOS: '435',
+        CLIENTESTOTAL: '58817',
+        PORCENTAJE: '0.7',
+      }),
+    ]
+    const duplicatedScope = { ...scope, comunas: duplicatedComunas }
+    const data = {
+      avisos: { type: 'FeatureCollection', features: scope.avisos },
+      trafos: { type: 'FeatureCollection', features: scope.trafos },
+      descargos: { type: 'FeatureCollection', features: scope.descargos },
+      comunas: { type: 'FeatureCollection', features: duplicatedComunas },
+      alimentadores: null,
+      estado: { datos: '26/07 12:00', porcentaje: null },
+    } as AppData
+
+    const result = computeKpis(data, duplicatedScope)
+    expect(result.comunasAfectadas).toBe(1)
+    expect(result.clientesAfectados).toBe(445)
+    expect(result.clientesTotales).toBe(58817)
+    expect(result.porcentajeClientes).toBeCloseTo((445 / 58817) * 100)
+  })
 })

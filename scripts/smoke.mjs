@@ -104,7 +104,49 @@ assert(
   'la vista RM no restauro sus conteos',
 )
 
-// 3) busqueda Photon: escribir y esperar resultados
+// 3) reporte regional y comunal: mismo alcance, dos paginas y mapa operacional
+await page.click('#report-open')
+await page.waitForSelector('#report-root')
+const regionalReport = await page.evaluate(() => ({
+  pages: document.querySelectorAll('#report-root .report-page').length,
+  scope: document.querySelector('#report-root .report-meta')?.textContent,
+  comunaPaths: document.querySelectorAll('#report-root .report-map-comuna').length,
+  operationalGroups: document.querySelectorAll(
+    '#report-root .report-map-incidencia-markers, #report-root .report-map-avisos',
+  ).length,
+  mapLegend: document.querySelector('#report-root .report-map-legend')?.textContent,
+  printLabel: document.querySelector('#report-print')?.textContent?.trim(),
+}))
+assert(regionalReport.pages === 2, 'el reporte RM no tiene dos paginas')
+assert(regionalReport.scope?.includes('RM'), 'el reporte RM no declara su alcance')
+assert(regionalReport.comunaPaths > 0, 'el reporte RM no genero mapa vectorial')
+assert(
+  regionalReport.operationalGroups === 2 &&
+    regionalReport.mapLegend?.includes('incidencia') &&
+    regionalReport.mapLegend?.includes('aviso'),
+  'el mapa del reporte no incluye sus capas operacionales',
+)
+assert(
+  regionalReport.printLabel === 'IMPRIMIR / GUARDAR PDF',
+  'el reporte no ofrece exportacion PDF',
+)
+await page.click('#report-close')
+await page.evaluate((nombre) => window.__selectComunaDebug?.(nombre), mapState?.firstComuna)
+await sleep(500)
+await page.click('#report-open')
+await page.waitForSelector('#report-root')
+const communeReportScope = await page.evaluate(
+  () => document.querySelector('#report-root .report-meta')?.textContent ?? '',
+)
+assert(
+  communeReportScope.includes(mapState?.firstComuna?.replaceAll('_', ' ')),
+  'el reporte comunal no conserva el alcance',
+)
+await page.click('#report-close')
+await page.click('#scope-clear')
+await sleep(400)
+
+// 4) busqueda Photon: escribir y esperar resultados
 await page.click('#search-input')
 await page.type('#search-input', 'Apoquindo 4500', { delay: 25 })
 let searchOk = false
@@ -134,7 +176,7 @@ assert(
   `la búsqueda salió de la RM: ${lon},${lat}`,
 )
 
-// 4) herramienta "Mas cercana": armar y click en centro del mapa
+// 5) herramienta "Mas cercana": armar y click en centro del mapa
 await page.evaluate(() => {
   const btns = [...document.querySelectorAll('#analysis-tools button')]
   btns.find((b) => b.textContent.includes('Mas cercana'))?.click()
@@ -148,7 +190,7 @@ const nearest = await page.evaluate(
 console.log('nearest verdict:', nearest)
 assert(nearest.includes('INCIDENCIA MAS CERCANA'), 'la herramienta de incidencia cercana no respondió')
 
-// 5) herramienta "Radio"
+// 6) herramienta "Radio"
 await page.evaluate(() => {
   const btns = [...document.querySelectorAll('#analysis-tools button')]
   btns.find((b) => b.textContent.trim().startsWith('Radio'))?.click()
@@ -162,7 +204,7 @@ const radio = await page.evaluate(
 console.log('radio verdict:', radio)
 assert(radio.includes('RADIO DE'), 'la herramienta de radio no respondió')
 
-// 6) hexbin toggle
+// 7) hexbin toggle
 await page.evaluate(() => {
   document.querySelector('[data-eye="hexbin"]')?.click()
 })
@@ -171,11 +213,32 @@ const hex = await page.evaluate(() => window.__mapDebug?.())
 console.log('hexbin rendered features:', hex?.rendered)
 assert(hex?.hexbinVisibility === 'visible', 'la capa hexbin no quedó visible')
 
-// 7) tema UI: ambos modos deben aplicarse sin recrear la app
+// 8) tema UI + reporte: el PDF usa SVG de impresion y foco aislado aun en dark
 await page.click('#theme-toggle')
 await sleep(400)
 const darkMode = await page.evaluate(() => window.__mapDebug?.().uiMode)
 assert(darkMode === 'dark', 'el modo oscuro de la UI no se aplicó')
+await page.click('#report-open')
+await page.waitForSelector('#report-root')
+const darkReport = await page.evaluate(() => ({
+  svgCount: document.querySelectorAll('#report-root .report-chart-svg').length,
+  appInert: document.querySelector('#app')?.hasAttribute('inert'),
+  activeId: document.activeElement?.id,
+}))
+assert(darkReport.svgCount === 2, 'el reporte no usa graficos SVG dedicados')
+assert(darkReport.appInert, 'el dashboard no quedo inert bajo el dialogo')
+assert(darkReport.activeId === 'report-print', 'el foco no entro al dialogo')
+await page.keyboard.down('Shift')
+await page.keyboard.press('Tab')
+await page.keyboard.up('Shift')
+const trappedFocus = await page.evaluate(() => document.activeElement?.id)
+assert(trappedFocus === 'report-close', 'el foco no cicla dentro del dialogo')
+await page.keyboard.press('Escape')
+const reportClosed = await page.evaluate(() => ({
+  root: !!document.querySelector('#report-root'),
+  appInert: document.querySelector('#app')?.hasAttribute('inert'),
+}))
+assert(!reportClosed.root && !reportClosed.appInert, 'el dialogo no restauro la app')
 await page.click('#theme-toggle')
 await sleep(250)
 

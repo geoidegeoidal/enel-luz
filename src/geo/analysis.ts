@@ -33,14 +33,36 @@ export interface VisibleData {
   ids: { avisos: string[]; incidencias: string[]; comunas: string[] } | null
 }
 
+export function mergePolygonFeatures(features: Poly[]): Poly | null {
+  if (!features.length) return null
+  if (features.length === 1) return features[0]
+  const coordinates = features.flatMap((feature) =>
+    feature.geometry.type === 'Polygon'
+      ? [feature.geometry.coordinates]
+      : feature.geometry.coordinates,
+  )
+  return {
+    type: 'Feature',
+    properties: { ...(features[0].properties ?? {}) },
+    geometry: { type: 'MultiPolygon', coordinates },
+  }
+}
+
+export function comunaScopeFeature(data: AppData, nombre: string): Poly | null {
+  return mergePolygonFeatures(
+    data.comunas.features.filter((feature) => propStr(feature, 'COMUNA') === nombre),
+  )
+}
+
 export function computeVisible(
   data: AppData,
   filterPoly: Poly | null,
   selectedComuna: string | null = null,
 ): VisibleData {
-  const selectedPoly = selectedComuna
-    ? data.comunas.features.find((f) => propStr(f, 'COMUNA') === selectedComuna) ?? null
-    : null
+  const selectedFeatures = selectedComuna
+    ? data.comunas.features.filter((f) => propStr(f, 'COMUNA') === selectedComuna)
+    : []
+  const selectedPoly = selectedComuna ? mergePolygonFeatures(selectedFeatures) : null
   if (selectedComuna && !selectedPoly) {
     return {
       avisos: [],
@@ -92,7 +114,7 @@ export function computeVisible(
   const trafos = data.trafos.features.filter(intersectsScope)
   const descargos = data.descargos.features.filter(intersectsScope)
   const incidencias = [...trafos, ...descargos]
-  const comunas = (selectedPoly ? [selectedPoly] : data.comunas.features).filter(intersectsScope)
+  const comunas = (selectedPoly ? selectedFeatures : data.comunas.features).filter(intersectsScope)
   return {
     avisos,
     incidencias,
@@ -102,7 +124,7 @@ export function computeVisible(
     ids: {
       avisos: avisos.map((f) => propStr(f, 'CODIGO')).filter(Boolean),
       incidencias: incidencias.map(incidenciaId).filter(Boolean),
-      comunas: comunas.map((f) => propStr(f, 'COMUNA')).filter(Boolean),
+      comunas: [...new Set(comunas.map((f) => propStr(f, 'COMUNA')).filter(Boolean))],
     },
   }
 }

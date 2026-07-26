@@ -94,9 +94,16 @@ Vite 6 + TypeScript vanilla (sin framework). Sin backend propio.
 - `src/main.ts`: orquestador. `restoreMapState()` re-aplica visibilidad/hexbin/
   overlay/highlight tras cambiar basemap. Auto-refresh: poll `estado.json` c/60 s
   con barra de progreso; reloj local + timestamp DATOS en masthead.
+- `src/report/report.ts`: modelo y plantilla client-side del reporte operativo
+  RM/comuna. Genera mapa SVG operacional con severidad, incidencias activas y
+  avisos, dos páginas A4 apaisadas y vista previa; el botón de impresión permite
+  guardar PDF sin enviar datos fuera del navegador.
+- `.interface-design/system.md`: sistema visual persistente (tokens, retícula,
+  patrones de dashboard y reporte). Leerlo antes de diseñar componentes nuevos.
 - `scripts/smoke.mjs`, `scripts/shots*.mjs`: tests E2E con puppeteer-core +
   Chrome instalado (headless). `smoke.mjs` verifica carga, búsqueda, radio,
-  nearest, hexbin. `__mapDebug` (window) expone estado del mapa para los tests.
+  nearest, hexbin y reportes RM/comuna. `__mapDebug` (window) expone estado del
+  mapa para los tests.
 
 ## Diseño (exigencia del usuario)
 
@@ -154,6 +161,10 @@ genérica tipo "AI slop"** (fue rechazada explícitamente).
     pertenecen a la zona horaria del navegador. Parsear, agrupar y rotular horas
     explícitamente en Chile; los gráficos temporales se recalculan cada minuto
     aunque no cambie el snapshot.
+16. **Una comuna puede venir en varias geometrías**: no usar `find(COMUNA)` ni
+    sumar `CLIENTESTOTAL` por feature. El alcance debe combinar todas las
+    geometrías del mismo nombre; KPIs, ranking y reportes suman afectados pero
+    usan el máximo `CLIENTESTOTAL` una sola vez (`aggregateComunas()`).
 
 ## Comandos
 
@@ -165,6 +176,7 @@ npm test              # regresiones unitarias (Vitest)
 npm run build         # producción a dist/ (incluye copia de public/data)
 npm run preview       # sirve dist/
 node scripts/smoke.mjs http://localhost:4173/   # E2E (requiere preview corriendo)
+node scripts/report-pdf.mjs http://localhost:4173/ RM output/pdf/reporte-rm.pdf
 ```
 
 ## Deploy (ya configurado)

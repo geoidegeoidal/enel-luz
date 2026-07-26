@@ -143,4 +143,39 @@ describe('cross-filter comunal', () => {
     expect(result.incidencias).toEqual([])
     expect(result.comunas).toEqual([])
   })
+
+  it('incluye todas las geometrias publicadas para una misma comuna', () => {
+    const west = square('COM-COL-W', 0, 1)
+    west.properties = { COMUNA: 'COLINA' }
+    const east: Feature<Polygon> = {
+      type: 'Feature',
+      properties: { COMUNA: 'COLINA' },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[[9, 9], [11, 9], [11, 11], [9, 11], [9, 9]]],
+      },
+    }
+    const westEvent = square('INC-W', 10)
+    const eastEvent: Feature<Polygon> = {
+      ...square('INC-E', 20),
+      geometry: east.geometry,
+    }
+    const data = dataWith(westEvent, eastEvent)
+    data.comunas.features = [west, east]
+    data.avisos.features = [
+      { ...center, properties: { CODIGO: 'AV-W' } },
+      {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [10, 10] },
+        properties: { CODIGO: 'AV-E' },
+      },
+    ]
+
+    const result = computeVisible(data, null, 'COLINA')
+
+    expect(result.comunas).toHaveLength(2)
+    expect(result.avisos).toHaveLength(2)
+    expect(result.incidencias).toHaveLength(2)
+    expect(result.ids?.comunas).toEqual(['COLINA'])
+  })
 })

@@ -42,6 +42,13 @@ export interface OperationalIndicators {
   sinEta: number
 }
 
+export interface ComunaStats {
+  nombre: string
+  clientesAfectados: number
+  clientesTotal: number
+  porcentaje: number
+}
+
 type Props = Record<string, any>
 
 export const props = (f: Feature): Props => (f.properties ?? {}) as Props
@@ -180,12 +187,9 @@ export function computeKpis(data: AppData, scope?: DataScope): Kpis {
   const avisos = scope?.avisos ?? data.avisos.features
   const trafos = scope?.trafos ?? data.trafos.features
   const descargos = scope?.descargos ?? data.descargos.features
-  let clientesAfectados = 0
-  let clientesTotales = 0
-  for (const f of comunas) {
-    clientesAfectados += propNum(f, 'CLIENTESAFECTADOS')
-    clientesTotales += propNum(f, 'CLIENTESTOTAL')
-  }
+  const comunaStats = aggregateComunas(comunas)
+  const clientesAfectados = comunaStats.reduce((sum, comuna) => sum + comuna.clientesAfectados, 0)
+  const clientesTotales = comunaStats.reduce((sum, comuna) => sum + comuna.clientesTotal, 0)
   const incidencias = dedupeIncidencias(
     trafos.filter((f) => !propStr(f, 'TIPO').toUpperCase().startsWith('DESCARGO')),
   ).length
@@ -196,8 +200,34 @@ export function computeKpis(data: AppData, scope?: DataScope): Kpis {
     avisos: avisos.length,
     incidencias,
     descargos: dedupeIncidencias(descargos).length,
-    comunasAfectadas: comunas.length,
+    comunasAfectadas: comunaStats.length,
   }
+}
+
+/**
+ * Agrega las filas de comuna por nombre. Enel puede publicar mas de una
+ * geometria para la misma comuna, repitiendo CLIENTESTOTAL en cada fila.
+ */
+export function aggregateComunas(features: Feature[]): ComunaStats[] {
+  const grouped = new Map<string, ComunaStats>()
+  for (const feature of features) {
+    const nombre = propStr(feature, 'COMUNA')
+    if (!nombre) continue
+    const current = grouped.get(nombre) ?? {
+      nombre,
+      clientesAfectados: 0,
+      clientesTotal: 0,
+      porcentaje: 0,
+    }
+    current.clientesAfectados += propNum(feature, 'CLIENTESAFECTADOS')
+    current.clientesTotal = Math.max(current.clientesTotal, propNum(feature, 'CLIENTESTOTAL'))
+    grouped.set(nombre, current)
+  }
+  for (const comuna of grouped.values()) {
+    comuna.porcentaje =
+      comuna.clientesTotal > 0 ? (comuna.clientesAfectados / comuna.clientesTotal) * 100 : 0
+  }
+  return [...grouped.values()]
 }
 
 export function computeOperationalIndicators(
