@@ -4,6 +4,8 @@ import {
   booleanIntersects,
   centroid,
   distance,
+  featureCollection,
+  intersect,
   pointsWithinPolygon,
 } from '@turf/turf'
 import type { Feature, Point, Polygon, MultiPolygon } from 'geojson'
@@ -14,6 +16,7 @@ import {
   propNum,
   etaTexto,
   incidenciaId,
+  dedupeIncidencias,
 } from '../data/model'
 
 type Poly = Feature<Polygon | MultiPolygon>
@@ -22,27 +25,79 @@ type Poly = Feature<Polygon | MultiPolygon>
 /* Filtro espacial global                                                */
 /* ------------------------------------------------------------------ */
 export interface VisibleData {
-  avisos: Feature[]
-  incidencias: Feature[]
-  comunas: Feature[]
+  avisos: Feature<Point>[]
+  incidencias: Poly[]
+  trafos: Poly[]
+  descargos: Poly[]
+  comunas: Poly[]
   ids: { avisos: string[]; incidencias: string[]; comunas: string[] } | null
 }
 
-export function computeVisible(data: AppData, filterPoly: Poly | null): VisibleData {
-  if (!filterPoly) {
+export function computeVisible(
+  data: AppData,
+  filterPoly: Poly | null,
+  selectedComuna: string | null = null,
+): VisibleData {
+  const selectedPoly = selectedComuna
+    ? data.comunas.features.find((f) => propStr(f, 'COMUNA') === selectedComuna) ?? null
+    : null
+  if (selectedComuna && !selectedPoly) {
+    return {
+      avisos: [],
+      incidencias: [],
+      trafos: [],
+      descargos: [],
+      comunas: [],
+      ids: { avisos: [], incidencias: [], comunas: [] },
+    }
+  }
+  if (!filterPoly && !selectedPoly) {
     return {
       avisos: data.avisos.features,
       incidencias: allIncidencias(data),
+      trafos: data.trafos.features,
+      descargos: data.descargos.features,
       comunas: data.comunas.features,
       ids: null,
     }
   }
-  const avisos = pointsWithinPolygon(data.avisos, filterPoly as any).features
-  const incidencias = allIncidencias(data).filter((f) => booleanIntersects(f as any, filterPoly as any))
-  const comunas = data.comunas.features.filter((f) => booleanIntersects(f as any, filterPoly as any))
+  let scopePoly: Poly | null = selectedPoly ?? filterPoly
+  if (selectedPoly && filterPoly) {
+    try {
+      scopePoly = intersect(featureCollection([selectedPoly, filterPoly]) as any) as Poly | null
+    } catch {
+      scopePoly = null
+    }
+    if (!scopePoly) {
+      return {
+        avisos: [],
+        incidencias: [],
+        trafos: [],
+        descargos: [],
+        comunas: [],
+        ids: { avisos: [], incidencias: [], comunas: [] },
+      }
+    }
+  }
+  const avisos = scopePoly
+    ? (pointsWithinPolygon(data.avisos, scopePoly as any).features as Feature<Point>[])
+    : data.avisos.features
+  const intersectsScope = (f: Poly) => {
+    try {
+      return !scopePoly || booleanIntersects(f as any, scopePoly as any)
+    } catch {
+      return false
+    }
+  }
+  const trafos = data.trafos.features.filter(intersectsScope)
+  const descargos = data.descargos.features.filter(intersectsScope)
+  const incidencias = [...trafos, ...descargos]
+  const comunas = (selectedPoly ? [selectedPoly] : data.comunas.features).filter(intersectsScope)
   return {
     avisos,
     incidencias,
+    trafos,
+    descargos,
     comunas,
     ids: {
       avisos: avisos.map((f) => propStr(f, 'CODIGO')).filter(Boolean),
@@ -79,23 +134,24 @@ export function analyzePoint(pt: Feature<Point>, data: AppData, radioM = 250): A
     }
   }
 
-  const incidencias: AffectedResult['incidencias'] = []
+  const matching: Feature[] = []
   for (const inc of allIncidencias(data)) {
     try {
-      if (booleanPointInPolygon(pt, inc as any)) {
-        const eta = etaTexto(inc)
-        incidencias.push({
-          id: incidenciaId(inc),
-          estado: propStr(inc, 'ESTADOINC') || '—',
-          clientes: propNum(inc, 'CLITOTAL'),
-          eta: eta.texto,
-          tipo: propStr(inc, 'TIPO').startsWith('DESCARGO') ? 'Descargo' : 'Incidencia',
-        })
-      }
+      if (booleanPointInPolygon(pt, inc as any)) matching.push(inc)
     } catch {
       /* ignorar */
     }
   }
+  const incidencias = dedupeIncidencias(matching).map((inc) => {
+    const eta = etaTexto(inc)
+    return {
+      id: incidenciaId(inc),
+      estado: propStr(inc, 'ESTADOINC') || '—',
+      clientes: propNum(inc, 'CLITOTAL'),
+      eta: eta.texto,
+      tipo: propStr(inc, 'TIPO').startsWith('DESCARGO') ? 'Descargo' : 'Incidencia',
+    }
+  })
 
   const zona = turfBuffer(pt, radioM, { units: 'meters' })
   const avisosCercanos = zona ? pointsWithinPolygon(data.avisos, zona as any).features.length : 0
@@ -122,13 +178,14 @@ export function bufferStats(center: Feature<Point>, radioM: number, data: AppDat
   const zona = turfBuffer(center, radioM, { units: 'meters' }) as Poly | undefined
   if (!zona) return null
   const avisos = pointsWithinPolygon(data.avisos, zona as any).features.length
-  const incs = allIncidencias(data).filter((f) => {
+  const intersecting = allIncidencias(data).filter((f) => {
     try {
       return booleanIntersects(f as any, zona as any)
     } catch {
       return false
     }
   })
+  const incs = dedupeIncidencias(intersecting)
   return {
     zona,
     avisos,

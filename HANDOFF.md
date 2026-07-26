@@ -17,20 +17,142 @@
 
 ## Sesión actual / próxima
 
-**Estado**: el proyecto se construyó el 2026-07-19 en una sola jornada de
-trabajo. Desde entonces solo recibe updates de datos automáticos (cron GitHub
-Actions cada 5 min, ver `.github/workflows/update-data.yml`). Ultimo commit
-no-data: `70d707f` (fix: stack legends when both comunas and densidad are
-active). Ultimo commit data: `2efaee5` (manual update 23:59 mismo día.
+**Estado**: paquete de inteligencia operacional implementado y validado el
+2026-07-26 sobre `origin/main` en `ff8a671`: cross-filter real por comuna y
+polígono, reloj operativo ±12 h, escala de reposición y seis indicadores de
+presión/edad/ETA. La revisión independiente posterior quedó incorporada:
+fuentes del mapa recortadas al alcance, intersección geométrica exacta,
+eventos únicos separados de polígonos, hora `America/Santiago`, percentiles
+interpolados, actualización temporal por minuto y tooltips seguros.
 
-**Próximo paso al retomar**: vericá `https://geoidegeoidal.github.io/enel-luz/`
-que el deploy de Pages esté sincronizado con `main` (sanity check). Si todo
-anda, no hay trabajo pendiente urgente; las ideas futuras están listadas en
-`AGENTS.md` § "Pendientes / ideas futuras".
+**Validación final**: Vitest 11/11, `tsc --noEmit`, build Vite y smoke E2E
+completo con Chrome. Capturas de escritorio regeneradas. Los archivos no
+versionados preexistentes del usuario (`assets/mobile_*.png` y
+`preview-err.log`) se conservaron fuera del commit.
+
+**Próximo paso al retomar**: comprobar el estado del workflow de Pages del
+commit de producto si aún estuviera ejecutándose. Después no quedan pendientes
+funcionales conocidos de esta sesión.
 
 ---
 
 ## Historial de sesiones
+
+### 2026-07-26 — Inteligencia operacional + cross-filter
+
+**Objetivo**: elevar la visualización de datos sin romper la dirección visual
+flat tipo panel de instrumentos suizo y publicar el resultado.
+
+**Hecho**:
+- Seleccionar una comuna o dibujar un polígono filtra de forma coherente mapa,
+  clusters, hexbin, KPIs y los cuatro gráficos; el alcance siempre queda visible
+  y puede volver a toda la RM con un control dedicado.
+- Nuevo panorama operacional con presión de 60 minutos, cambio contra la hora
+  anterior, edades P50/P90, ETA vencidas y eventos sin ETA.
+- Gráfico firma “Reloj operativo · ±12 h” centrado en AHORA y escala de
+  reposición ordenada por urgencia; ranking e impacto comunal conservados.
+- KPIs corregidos para distinguir incidencias activas únicas, descargos únicos y
+  conteos de polígonos de las capas.
+- Fechas Enel interpretadas explícitamente en `America/Santiago`; gráficos
+  temporales actualizados por minuto sin depender de una descarga nueva.
+- Buscador RM, geoprocesos deduplicados, tema dinámico y documentación previa
+  integrados en el mismo paquete.
+- Capturas `final_initial.png`, `final_charts.png` y `final_diag.png`
+  regeneradas con datos reales.
+
+**Validación**:
+- `npm test`: 4 archivos, 11/11 pruebas OK.
+- `tsc --noEmit`: OK.
+- `npm run build`: OK.
+- Smoke E2E de producción local: OK, incluido filtro por comuna y retorno a RM.
+- Revisión independiente: todos los hallazgos críticos e importantes
+  incorporados; sin bloqueantes restantes.
+
+**Cambios de repo**:
+- Publicación directa en `main` solicitada por el usuario; el deploy se realiza
+  mediante `.github/workflows/deploy.yml`.
+- `assets/mobile_*.png` y `preview-err.log` permanecen fuera de versión.
+
+### 2026-07-26 — Correcciones de revisión + cobertura de regresión
+
+**Objetivo**: corregir todos los hallazgos funcionales de la revisión integral
+y proponer el siguiente salto de calidad para la visualización de datos sin
+alterar la dirección visual plana tipo panel de instrumentos suizo.
+
+**Hecho**:
+- Buscador restringido a la RM tanto en Photon/Nominatim como en validación
+  cliente; resultados construidos con DOM seguro para evitar inyección HTML.
+- Deduplicación de incidencias aplicada también al diagnóstico de dirección y
+  al radio de 500 m; `CLITOTAL` ya no se infla por polígonos repetidos.
+- El filtro espacial reemplaza la fuente de avisos visible, por lo que clusters
+  y etiquetas se recalculan sólo con los puntos filtrados.
+- Gráficos pueden renderizar antes que el mapa y sus colores de ejes/tooltips
+  se recalculan con la paleta activa al cambiar de tema.
+- README, footer y AGENTS alineados con el deploy real y el carácter
+  best-effort del cron.
+- Añadido Vitest con 6 pruebas de regresión para búsqueda RM, deduplicación,
+  radio, diagnóstico y filtrado/reclustering.
+- Smoke E2E endurecido con geocoder simulado, resultado malicioso controlado y
+  aserciones reales para búsqueda, XSS, mapa, radio, incidencia cercana,
+  hexbin y tema.
+- Revisión independiente sin bloqueantes; sus observaciones sobre IDs
+  alternativos, restablecimiento del clúster y determinismo del smoke quedaron
+  incorporadas.
+
+**Validación**:
+- `npm test`: 3 archivos, 6/6 pruebas OK.
+- `tsc --noEmit`: OK.
+- `npm run build`: OK.
+- `node scripts/smoke.mjs http://127.0.0.1:43129/ ...`: OK.
+- `git diff --check`: OK (sólo avisos de conversión LF/CRLF de Git).
+
+**Cambios de repo**:
+- Cambios pendientes sin commit en código, tests, documentación y lockfile.
+- No se hizo commit, push ni deploy.
+- No se tocaron `assets/mobile_*.png` ni `preview-err.log`.
+
+### 2026-07-26 — Revisión integral + conexión GitHub verificada
+
+**Objetivo**: revisar el proyecto completo, explicar su arquitectura y dejar
+GitHub disponible para controlar los repositorios del usuario.
+
+**Hecho**:
+- Recorrido completo de código, estilos, datos, scripts y workflows.
+- Dependencias instaladas localmente; `npm run build` y `tsc --noEmit` OK.
+- Smoke E2E con Chrome OK: mapa, gráficos, búsqueda, radio, incidencia cercana
+  y hexbin renderizan; captura generada correctamente.
+- Producción verificada: Pages respondió con `datos: "26/07 04:24"`.
+- Actions verificado: el run `30194732878` actualizó datos a `b95b2b3`, construyó
+  el artefacto desde ese commit y desplegó Pages con éxito.
+- Plugin/conector GitHub ya estaba instalado y conectado como `geoidegeoidal`;
+  acceso a `geoidegeoidal/enel-luz` confirmado con permisos admin/maintain/
+  pull/push/triage. GitHub CLI también está autenticado con scopes
+  `repo` y `workflow`.
+
+**Hallazgos pendientes (no corregidos en esta sesión)**:
+1. `src/geo/search.ts`: `RM_BBOX` está declarado pero no se envía a Photon. El
+   smoke de “Apoquindo 4500” seleccionó “Apoquindo, La Unión” y sacó el mapa de
+   la RM.
+2. `src/geo/analysis.ts:125-136`: `bufferStats()` cuenta polígonos, no eventos,
+   y suma `CLITOTAL` sin deduplicar por `INCIDENCIA`; reintroduce la inflación
+   que KPIs y ranking ya evitan.
+3. `src/map/layers.ts:328-332`: el filtro espacial de avisos solo se aplica a
+   `avisosPoints`; clusters y sus etiquetas siguen agregando todos los avisos.
+4. `src/main.ts:283-288`: `refreshViews()` retorna si el mapa aún no existe,
+   por lo que contradice el comentario de renderizar gráficos antes de tiles.
+5. `src/charts/charts.ts:30-41`: estilos base de ejes/tooltips capturan la
+   paleta clara al importar; el cambio a dark mode no recalcula todos esos
+   colores.
+6. `README.md:69` afirma que los commits de datos no disparan rebuild, pero el
+   workflow actual llama explícitamente a `deploy.yml` cuando cambian datos.
+7. El cron declara `*/5`, pero los runs observados se ejecutan aproximadamente
+   cada hora por la naturaleza best-effort de GitHub Actions; no garantiza
+   frescura real de cinco minutos.
+
+**Cambios de repo**:
+- Solo esta actualización de `HANDOFF.md`.
+- No se modificó código de producto ni se tocaron los archivos no versionados
+  existentes (`assets/mobile_*.png`, `preview-err.log`).
 
 ### 2026-07-20 — Auto-refresh elegante con pausa en background + freshness badge
 

@@ -13,10 +13,12 @@ import { loadAll, reloadIfChanged } from './data/loader'
 import {
   AppData,
   computeKpis,
+  computeOperationalIndicators,
   propStr,
   fmtNum,
   allIncidencias,
   incidenciaId,
+  dedupeIncidencias,
   prettyName,
 } from './data/model'
 import { store } from './state'
@@ -37,13 +39,20 @@ import {
 import {
   initComunaChart,
   initTimelineChart,
-  initEstadosChart,
+  initEtaChart,
   initRankingChart,
   renderKpis,
+  renderOperationalIndicators,
   updateAllCharts,
 } from './charts/charts'
 import { attachSearch, SearchPick } from './geo/search'
-import { computeVisible, analyzePoint, bufferStats, nearestIncidencia } from './geo/analysis'
+import {
+  computeVisible,
+  analyzePoint,
+  bufferStats,
+  nearestIncidencia,
+  type VisibleData,
+} from './geo/analysis'
 import { buildHexbin } from './geo/hexbin'
 import { DrawSession } from './geo/drawFilter'
 import {
@@ -66,8 +75,19 @@ const $ = <T extends HTMLElement = HTMLElement>(id: string): T => document.getEl
 /* ------------------------------------------------------------------ */
 /* Panel de analisis — renderers                                         */
 /* ------------------------------------------------------------------ */
+function esc(value: unknown): string {
+  const entities: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  }
+  return String(value).replace(/[&<>"']/g, (char) => entities[char])
+}
+
 function fact(label: string, value: string): string {
-  return `<div class="fact"><span class="f-label">${label}</span><span class="f-value">${value}</span></div>`
+  return `<div class="fact"><span class="f-label">${esc(label)}</span><span class="f-value">${esc(value)}</span></div>`
 }
 
 function renderAffected(r: ReturnType<typeof analyzePoint>, label: string): void {
@@ -268,7 +288,8 @@ function toggleHexbin(on: boolean): void {
   layerState.hexbin = on
   if (!data || !map) return
   if (on) {
-    setHexbinData(map, buildHexbin(data.avisos))
+    const visible = computeVisible(data, store.state.filterPoly, store.state.selectedComuna)
+    setHexbinData(map, buildHexbin({ type: 'FeatureCollection', features: visible.avisos }))
     setLayerVisibility(map, 'hexbin', true)
     toast('Densidad de avisos activada')
   } else {
@@ -281,11 +302,47 @@ function toggleHexbin(on: boolean): void {
 /* Filtro espacial -> mapa + graficos                                    */
 /* ------------------------------------------------------------------ */
 function refreshViews(): void {
-  const { data, filterPoly } = store.state
-  if (!data || !map) return
-  const visible = computeVisible(data, filterPoly)
-  applyIdFilter(map, visible.ids)
-  updateAllCharts(charts, data, visible)
+  const { data, filterPoly, selectedComuna } = store.state
+  if (!data) return
+  const visible = computeVisible(data, filterPoly, selectedComuna)
+  lastVisible = visible
+  const kpis = computeKpis(data, visible)
+  if (map) {
+    applyIdFilter(map, visible.ids, visible.avisos, visible.trafos, visible.descargos)
+    if (hexOn) {
+      setHexbinData(map, buildHexbin({ type: 'FeatureCollection', features: visible.avisos }))
+    }
+  }
+  renderKpis($('kpis'), kpis)
+  renderOperationalIndicators($('ops-indicators'), computeOperationalIndicators(visible))
+  renderScopeContext(
+    dedupeIncidencias(visible.incidencias).length,
+    visible.avisos.length,
+    visible.comunas.length,
+  )
+  if (charts) updateAllCharts(charts, data, visible)
+}
+
+let lastVisible: VisibleData | null = null
+
+function refreshTemporalViews(): void {
+  const data = store.state.data
+  if (!data) return
+  const visible =
+    lastVisible ??
+    computeVisible(data, store.state.filterPoly, store.state.selectedComuna)
+  renderOperationalIndicators($('ops-indicators'), computeOperationalIndicators(visible))
+  if (charts) updateAllCharts(charts, data, visible)
+}
+
+function renderScopeContext(incidencias: number, avisos: number, comunas: number): void {
+  const { selectedComuna, filterPoly } = store.state
+  const parts = ['RM']
+  if (selectedComuna) parts.push(prettyName(selectedComuna))
+  if (filterPoly) parts.push('AREA DIBUJADA')
+  $('scope-label').textContent = parts.join(' / ')
+  $('scope-detail').textContent = `${fmtNum(comunas)} comunas · ${fmtNum(incidencias)} eventos · ${fmtNum(avisos)} avisos`
+  $('scope-clear').classList.toggle('hidden', !selectedComuna && !filterPoly)
 }
 
 /* ------------------------------------------------------------------ */
@@ -296,6 +353,7 @@ let countdown = POLL_S
 let lastPollAt = 0
 let pollErrors = 0
 let pollTimer: ReturnType<typeof setInterval> | undefined
+let lastTemporalMinute = Math.floor(Date.now() / 60000)
 
 async function tickRefresh({ manual = false } = {}): Promise<void> {
   const data = store.state.data
@@ -360,6 +418,11 @@ function startPolling(): void {
     tickClock()
     if (!document.hidden) countdown--
     if (countdown <= 0) void tickRefresh()
+    const temporalMinute = Math.floor(Date.now() / 60000)
+    if (temporalMinute !== lastTemporalMinute) {
+      lastTemporalMinute = temporalMinute
+      refreshTemporalViews()
+    }
     const fill = $('refresh-fill')
     if (fill) fill.style.width = `${Math.max(0, (countdown / POLL_S) * 100)}%`
     if (!document.hidden) updateFreshness()
@@ -381,13 +444,16 @@ function stopPolling(): void {
 }
 
 function applyNewData(data: AppData): void {
-  store.set({ data })
+  const selected = store.state.selectedComuna
+  const selectedStillExists = selected
+    ? data.comunas.features.some((f) => propStr(f, 'COMUNA') === selected)
+    : false
+  store.set({ data, selectedComuna: selectedStillExists ? selected : null })
   if (map) {
     updateData(map, data)
     if (hexOn) setHexbinData(map, buildHexbin(data.avisos))
   }
   $('estado-fecha').textContent = data.estado.datos
-  renderKpis($('kpis'), computeKpis(data))
   updateLayerCounts($('toolbar'), data)
   refreshViews()
   updateFreshness()
@@ -396,7 +462,7 @@ function applyNewData(data: AppData): void {
 /* ------------------------------------------------------------------ */
 /* Boot                                                                  */
 /* ------------------------------------------------------------------ */
-let charts: ReturnType<typeof buildCharts>
+let charts: ReturnType<typeof buildCharts> | null = null
 
 function buildCharts() {
   const ctx = {
@@ -411,7 +477,7 @@ function buildCharts() {
   return {
     comunas: initComunaChart($('chart-comunas'), ctx),
     timeline: initTimelineChart($('chart-timeline')),
-    estados: initEstadosChart($('chart-estados')),
+    eta: initEtaChart($('chart-eta'), ctx),
     ranking: initRankingChart($('chart-ranking'), ctx),
   }
 }
@@ -423,8 +489,6 @@ async function boot(): Promise<void> {
   store.set({ data })
   $('estado-fecha').textContent = data.estado.datos
   $('analysis-body').innerHTML = EMPTY_ANALYSIS_HTML
-  renderKpis($('kpis'), computeKpis(data))
-
   charts = buildCharts()
   refreshViews() // graficos al instante, sin esperar tiles del mapa
 
@@ -445,7 +509,23 @@ async function boot(): Promise<void> {
       rendered: map!.queryRenderedFeatures().length,
       comunasRendered: map!.queryRenderedFeatures(undefined, { layers: ['ly-comunas-fill'] })
         .length,
+      center: map!.getCenter().toArray(),
+      hexbinVisibility: map!.getLayoutProperty('ly-hexbin-fill', 'visibility'),
+      uiMode: document.documentElement.dataset.ui,
+      selectedComuna: store.state.selectedComuna,
+      firstComuna: propStr(store.state.data!.comunas.features[0], 'COMUNA'),
+      visibleSummary: lastVisible
+        ? {
+            avisos: lastVisible.avisos.length,
+            trafos: lastVisible.trafos.length,
+            descargos: lastVisible.descargos.length,
+            eventos: dedupeIncidencias(lastVisible.incidencias).length,
+            comunas: lastVisible.comunas.length,
+          }
+        : null,
     })
+    ;(window as any).__selectComunaDebug = (nombre: string | null) =>
+      store.set({ selectedComuna: nombre })
   })
   map.on('click', onMapClickForTools)
   map.on('error', (e) => console.error('[mapa]', e?.error?.message ?? e))
@@ -488,6 +568,11 @@ async function boot(): Promise<void> {
   buildAnalysisTools($('analysis-tools'), toolbarHandlers)
   updateLayerCounts($('toolbar'), data)
 
+  $('scope-clear').addEventListener('click', () => {
+    store.set({ selectedComuna: null, filterPoly: null })
+    toast('Vista restaurada a toda la RM')
+  })
+
   /* Toggle claro/oscuro del chrome */
   buildThemeToggle($('theme-toggle'), () => {
     applyUiMode(document.documentElement.dataset.ui === 'dark' ? 'light' : 'dark')
@@ -522,6 +607,7 @@ async function boot(): Promise<void> {
     } else {
       tickClock()
       updateFreshness()
+      refreshTemporalViews()
       if (Date.now() - lastPollAt > 5000) {
         lastPollAt = Date.now()
         void tickRefresh()

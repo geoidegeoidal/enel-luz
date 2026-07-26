@@ -66,6 +66,9 @@ Vite 6 + TypeScript vanilla (sin framework). Sin backend propio.
   `tiles.openfreemap.org/fonts/`) y satelital (raster Esri World Imagery +
   capa Reference de etiquetas). Cambio con `map.setStyle(style, {diff:false})`.
 - **Gráficos**: Apache ECharts tree-shaken (`src/charts/charts.ts`).
+  El reloj operativo usa 25 buckets horarios centrados en “AHORA” (−12/+12 h)
+  y combina inicios del snapshot activo con ETA futuras/vencidas. La escala de
+  reposición ordena eventos únicos por minutos respecto de la hora actual.
 - **Geoprocesos client-side**: Turf.js (`src/geo/`): point-in-polygon
   (¿dirección afectada?), buffer 500 m, filtro por polígono dibujado
   (`drawFilter.ts` propio, sin maplibre-gl-draw), hexbin (`hexGrid`+`collect`),
@@ -74,7 +77,8 @@ Vite 6 + TypeScript vanilla (sin framework). Sin backend propio.
   fallback Nominatim (`src/geo/search.ts`).
 - **Fuentes**: IBM Plex Sans/Mono vía @fontsource (self-hosted).
 - Estado central mínimo: `src/state.ts` (store con pub/sub: data, filterPoly,
-  selectedComuna).
+  selectedComuna). `selectedComuna` es un cross-filter real: limita mapa,
+  clusters, hexbin, KPIs y todos los gráficos al polígono comunal.
 
 ### Archivos clave
 
@@ -125,6 +129,31 @@ genérica tipo "AI slop"** (fue rechazada explícitamente).
 8. Timestamp `datos` = **hora local Chile (UTC-4)**, no UTC. Enel republica
    cada pocos minutos.
 9. **GitHub Pages con Vite no se actualiza sin rebuild completo**: Originalmente se excluyó `public/data/**` en `deploy.yml` creyendo que GitHub Pages serviría los JSON sueltos. FALSO. Al usar un action para el deploy (`deploy-pages`), se sirve exclusivamente un artefacto (`dist/`) generado por Vite. Los cambios de datos *deben* disparar el deploy para que el artefacto resultante los incluya.
+10. **Geocoding fuera de RM**: declarar un bbox no sirve si no se envía. Photon
+    usa `bbox=minLon,minLat,maxLon,maxLat`; Nominatim requiere `viewbox` +
+    `bounded=1`. Mantener además la validación client-side `isInsideRm()` para
+    descartar respuestas defectuosas de cualquiera de los proveedores.
+11. **Los filtros de capa no recortan las fuentes**: filtrar solo las capas
+    renderizadas no cambia los clusters y puede volver a mostrar polígonos
+    duplicados de una incidencia que cruza el alcance. Para un filtro espacial,
+    reemplazar `src-avisos`, `src-trafos` y `src-descargos` por sus
+    FeatureCollections visibles; restaurar las colecciones completas al limpiar.
+12. **Deduplicar también en geoprocesos**: la regla de `INCIDENCIA` duplicada no
+    aplica solo a KPIs y gráficos. Diagnóstico por punto, buffers y cualquier
+    agregación futura deben usar `dedupeIncidencias()` antes de contar eventos o
+    sumar `CLITOTAL`.
+13. **El reloj operativo NO es historia persistida**: los inicios, edades y
+    presión horaria se derivan únicamente de eventos todavía presentes en el
+    snapshot activo. No rotularlos como “histórico” ni inferir reposiciones
+    efectivas; `FECHA_REPOSICION` es una ETA y puede estar vencida/reestimándose.
+14. **Comuna + polígono exige intersección geométrica real**: comprobar que una
+    incidencia toca ambos polígonos por separado produce falsos positivos. Crear
+    primero `intersect(comuna, filtro)` y evaluar todos los features contra esa
+    geometría común; si no existe intersección, el alcance queda vacío.
+15. **Fechas Enel siempre en `America/Santiago`**: los campos sin offset no
+    pertenecen a la zona horaria del navegador. Parsear, agrupar y rotular horas
+    explícitamente en Chile; los gráficos temporales se recalculan cada minuto
+    aunque no cambie el snapshot.
 
 ## Comandos
 
@@ -132,6 +161,7 @@ genérica tipo "AI slop"** (fue rechazada explícitamente).
 npm install
 npm run fetch-data    # espejo a public/data/ (--force para forzar)
 npm run dev           # desarrollo (sirve public/ directo)
+npm test              # regresiones unitarias (Vitest)
 npm run build         # producción a dist/ (incluye copia de public/data)
 npm run preview       # sirve dist/
 node scripts/smoke.mjs http://localhost:4173/   # E2E (requiere preview corriendo)

@@ -1,5 +1,5 @@
 import * as echarts from 'echarts/core'
-import { BarChart, PieChart } from 'echarts/charts'
+import { BarChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent, MarkLineComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import type { EChartsCoreOption } from 'echarts/core'
@@ -15,9 +15,15 @@ import {
   fmtNum,
   incidenciaId,
   prettyName,
+  incidenciaInicio,
+  dedupeIncidencias,
+  enelHourStart,
+  fmtEnelHour,
+  fmtEnelDayHour,
+  type OperationalIndicators,
 } from '../data/model'
 
-echarts.use([BarChart, PieChart, GridComponent, TooltipComponent, MarkLineComponent, CanvasRenderer])
+echarts.use([BarChart, GridComponent, TooltipComponent, MarkLineComponent, CanvasRenderer])
 
 export interface ChartCtx {
   onComunaSelect: (nombre: string) => void
@@ -27,18 +33,36 @@ export interface ChartCtx {
 const MONO = "'IBM Plex Mono', 'Consolas', monospace"
 const SANS = "'IBM Plex Sans', 'Segoe UI', Arial, sans-serif"
 
-const axisText = { color: ui.ink2, fontSize: 10, fontFamily: MONO }
-const splitLine = { lineStyle: { color: ui.lineSoft, width: 1 } }
-const axisLine = { lineStyle: { color: ui.lineSoft } }
+const fmtDuration = (minutes: number): string => {
+  const mins = Math.max(0, Math.round(minutes))
+  if (mins < 60) return `${mins}m`
+  const hours = Math.floor(mins / 60)
+  const rest = mins % 60
+  return rest ? `${hours}h ${String(rest).padStart(2, '0')}m` : `${hours}h`
+}
 
-const tooltipBase = {
+const HTML_ENTITIES: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#039;',
+}
+const escHtml = (value: unknown): string =>
+  String(value).replace(/[&<>"']/g, (char) => HTML_ENTITIES[char])
+
+const axisText = () => ({ color: ui.ink2, fontSize: 10, fontFamily: MONO })
+const splitLine = () => ({ lineStyle: { color: ui.lineSoft, width: 1 } })
+const axisLine = () => ({ lineStyle: { color: ui.lineSoft } })
+
+const tooltipBase = () => ({
   backgroundColor: ui.panel,
   borderColor: ui.ink,
   borderWidth: 1,
   textStyle: { color: ui.ink, fontSize: 12, fontFamily: SANS },
   extraCssText: 'border-radius:0;',
   confine: true,
-}
+})
 
 function makeChart(el: HTMLElement) {
   const c = echarts.init(el, undefined, { renderer: 'canvas' })
@@ -71,18 +95,18 @@ export function initComunaChart(el: HTMLElement, ctx: ChartCtx) {
     lastRows = rows
 
     chart.setOption({
-      grid: { left: 6, right: 46, top: 8, bottom: 4, containLabel: true },
+      grid: { left: 6, right: 78, top: 8, bottom: 4, containLabel: true },
       xAxis: {
         type: 'value',
-        axisLabel: { ...axisText, formatter: (v: number) => (v >= 1000 ? `${v / 1000}k` : `${v}`) },
-        splitLine,
-        axisLine,
+        axisLabel: { ...axisText(), formatter: (v: number) => (v >= 1000 ? `${v / 1000}k` : `${v}`) },
+        splitLine: splitLine(),
+        axisLine: axisLine(),
       },
       yAxis: {
         type: 'category',
         data: rows.map((r) => r.display),
-        axisLabel: { ...axisText, fontFamily: SANS, fontSize: 10.5, color: ui.ink },
-        axisLine,
+        axisLabel: { ...axisText(), fontFamily: SANS, fontSize: 10.5, color: ui.ink },
+        axisLine: axisLine(),
         axisTick: { show: false },
       },
       series: [
@@ -102,15 +126,18 @@ export function initComunaChart(el: HTMLElement, ctx: ChartCtx) {
             fontSize: 10,
             fontFamily: MONO,
             fontWeight: 600,
-            formatter: (p: any) => fmtNum(p.value),
+            formatter: (p: any) => {
+              const row = rows[p.dataIndex]
+              return `${fmtNum(p.value)} · ${row.pct.toFixed(1)}%`
+            },
           },
         },
       ],
       tooltip: {
-        ...tooltipBase,
+        ...tooltipBase(),
         formatter: (p: any) => {
           const r = rows[p.dataIndex]
-          return `<b>${p.name}</b><br/>Clientes afectados: <b>${fmtNum(p.value)}</b><br/>Afectacion comunal: <b>${r.pct.toFixed(1)}%</b>`
+          return `<b>${escHtml(p.name)}</b><br/>Clientes afectados: <b>${fmtNum(p.value)}</b><br/>Afectacion comunal: <b>${r.pct.toFixed(1)}%</b>`
         },
       },
     } as EChartsCoreOption)
@@ -118,77 +145,126 @@ export function initComunaChart(el: HTMLElement, ctx: ChartCtx) {
   return { update }
 }
 
-/* ---------------- Timeline: inicios por hora ---------------- */
+/* ---------------- Reloj operativo: presión pasada + ETA futura ---------------- */
 
 export function initTimelineChart(el: HTMLElement) {
   const chart = makeChart(el)
 
   const update = (avisos: Feature[], incidencias: Feature[]) => {
-    const buckets = new Map<string, { avisos: number; incidencias: number; sort: number }>()
-    const key = (d: Date) => {
-      const p = (n: number) => String(n).padStart(2, '0')
-      return `${p(d.getDate())}/${p(d.getMonth() + 1)} ${p(d.getHours())}:00`
-    }
-    const bump = (d: Date | null, kind: 'avisos' | 'incidencias') => {
-      if (!d) return
-      const k = key(d)
-      if (!buckets.has(k)) buckets.set(k, { avisos: 0, incidencias: 0, sort: d.getTime() })
-      buckets.get(k)![kind]++
-    }
-    avisos.forEach((f) => bump(parseFecha(propStr(f, 'FECHA_INI')), 'avisos'))
-    
-    const uniqueInc = new Map<string, Feature>()
-    incidencias.forEach((f) => {
-      const id = incidenciaId(f)
-      if (id && !uniqueInc.has(id)) uniqueInc.set(id, f)
+    const hourMs = 60 * 60 * 1000
+    const now = new Date()
+    const nowHour = enelHourStart(now)
+    const buckets = Array.from({ length: 25 }, (_, i) => {
+      const offset = i - 12
+      const start = new Date(nowHour.getTime() + offset * hourMs)
+      return { offset, start, avisos: 0, incidencias: 0, reposiciones: 0, vencidas: 0 }
     })
-    Array.from(uniqueInc.values()).forEach((f) => bump(parseFecha(propStr(f, 'FECHA_INICIO')), 'incidencias'))
-
-    const ordered = [...buckets.entries()].sort((a, b) => a[1].sort - b[1].sort).slice(-24)
+    const bucketFor = (d: Date | null) => {
+      if (!d) return null
+      const offset = Math.floor((d.getTime() - nowHour.getTime()) / hourMs)
+      return offset < -12 || offset > 12 ? null : buckets[offset + 12]
+    }
+    avisos.forEach((f) => {
+      const d = parseFecha(propStr(f, 'FECHA_INI'))
+      if (d && d.getTime() <= now.getTime()) {
+        const bucket = bucketFor(d)
+        if (bucket) bucket.avisos++
+      }
+    })
+    const uniqueInc = dedupeIncidencias(incidencias)
+    uniqueInc.forEach((f) => {
+      const start = incidenciaInicio(f)
+      if (start && start.getTime() <= now.getTime()) {
+        const bucket = bucketFor(start)
+        if (bucket) bucket.incidencias++
+      }
+      const eta = parseFecha(propStr(f, 'FECHA_REPOSICION'))
+      const etaBucket = bucketFor(eta)
+      if (eta && etaBucket) {
+        if (eta.getTime() <= now.getTime()) etaBucket.vencidas++
+        else etaBucket.reposiciones++
+      }
+    })
+    const labels = buckets.map((b) => fmtEnelHour(b.start))
     chart.setOption({
-      grid: { left: 6, right: 10, top: 10, bottom: 4, containLabel: true },
+      grid: { left: 6, right: 10, top: 24, bottom: 4, containLabel: true },
       xAxis: {
         type: 'category',
-        data: ordered.map(([k]) => k),
+        data: labels,
         axisLabel: {
-          ...axisText,
+          ...axisText(),
           fontSize: 9,
-          rotate: 50,
-          interval: 2,
-          formatter: (v: string) => v.split(' ')[1] ?? v,
+          interval: 3,
+          formatter: (v: string, i: number) => (i === 12 ? 'AHORA' : v),
         },
-        axisLine,
+        axisLine: axisLine(),
         axisTick: { show: false },
       },
-      yAxis: { type: 'value', axisLabel: axisText, splitLine, axisLine },
+      yAxis: {
+        type: 'value',
+        axisLabel: axisText(),
+        splitLine: splitLine(),
+        axisLine: axisLine(),
+      },
       series: [
         {
           name: 'Avisos',
           type: 'bar',
-          stack: 't',
-          data: ordered.map(([, v]) => v.avisos),
+          stack: 'operacion',
+          data: buckets.map((b) => b.avisos),
           itemStyle: { color: theme.cyan },
-          barMaxWidth: 14,
+          barMaxWidth: 12,
+          markLine: {
+            symbol: 'none',
+            silent: true,
+            lineStyle: { color: ui.ink, width: 1 },
+            label: {
+              show: true,
+              formatter: 'AHORA',
+              color: ui.ink,
+              fontFamily: MONO,
+              fontSize: 9,
+            },
+            data: [{ xAxis: labels[12] }],
+          },
         },
         {
-          name: 'Incidencias',
+          name: 'Inicios',
           type: 'bar',
-          stack: 't',
-          data: ordered.map(([, v]) => v.incidencias),
+          stack: 'operacion',
+          data: buckets.map((b) => b.incidencias),
           itemStyle: { color: theme.orange },
-          barMaxWidth: 14,
+          barMaxWidth: 12,
+        },
+        {
+          name: 'ETA futuras',
+          type: 'bar',
+          stack: 'operacion',
+          data: buckets.map((b) => b.reposiciones),
+          itemStyle: { color: theme.green },
+          barMaxWidth: 12,
+        },
+        {
+          name: 'ETA vencidas',
+          type: 'bar',
+          stack: 'operacion',
+          data: buckets.map((b) => b.vencidas),
+          itemStyle: { color: theme.red },
+          barMaxWidth: 12,
         },
       ],
       tooltip: {
-        ...tooltipBase,
+        ...tooltipBase(),
         trigger: 'axis',
         axisPointer: { type: 'line', lineStyle: { color: ui.ink } },
         formatter: (ps: any[]) => {
-          const t = ps[0]?.axisValue ?? ''
+          const b = buckets[ps[0]?.dataIndex ?? 0]
+          const t = fmtEnelDayHour(b.start)
           const lines = ps
+            .filter((p) => Number(p.value) > 0)
             .map((p) => `${p.seriesName}: <b style="font-family:${MONO}">${p.value}</b>`)
             .join('<br/>')
-          return `<b>${t}</b><br/>${lines}`
+          return `<b>${t}</b><br/>${lines || 'Sin actividad registrada'}`
         },
       },
     } as EChartsCoreOption)
@@ -196,64 +272,104 @@ export function initTimelineChart(el: HTMLElement) {
   return { update }
 }
 
-/* ---------------- Donut: estados de incidencia ---------------- */
+/* ---------------- Escala de reposición y antigüedad ---------------- */
 
-export function initEstadosChart(el: HTMLElement) {
+export function initEtaChart(el: HTMLElement, ctx: ChartCtx) {
   const chart = makeChart(el)
+  let lastRows: Array<{
+    id: string
+    minutos: number | null
+    texto: string
+    color: string
+    clientes: number
+  }> = []
+  chart.on('click', (p: any) => {
+    const id = lastRows[p?.dataIndex]?.id
+    if (id) ctx.onIncidenciaSelect(id)
+  })
 
   const update = (incidencias: Feature[]) => {
-    const counts = new Map<string, number>()
-    const uniqueInc = new Map<string, Feature>()
-    incidencias.forEach((f) => {
-      const id = incidenciaId(f)
-      if (id && !uniqueInc.has(id)) uniqueInc.set(id, f)
-    })
-    Array.from(uniqueInc.values()).forEach((f) => {
-      const e = propStr(f, 'ESTADOINC') || 'Sin estado'
-      counts.set(e, (counts.get(e) ?? 0) + 1)
-    })
-    const rows = [...counts.entries()].sort((a, b) => b[1] - a[1])
-    const total = rows.reduce((a, [, v]) => a + v, 0)
-    // Top 4 + "Otros" para no saturar la dona en ancho medio
-    const top = rows.slice(0, 4)
-    const rest = rows.slice(4).reduce((a, [, v]) => a + v, 0)
-    const slices: Array<[string, number]> = rest > 0 ? [...top, ['Otros', rest]] : top
+    const now = Date.now()
+    const rows = dedupeIncidencias(incidencias)
+      .map((f) => {
+        const id = incidenciaId(f) || 'SIN ID'
+        const eta = parseFecha(propStr(f, 'FECHA_REPOSICION'))
+        const minutos = eta ? Math.round((eta.getTime() - now) / 60000) : null
+        const texto =
+          minutos === null
+            ? 'SIN ETA'
+            : minutos <= 0
+              ? `VENCIDA ${fmtDuration(Math.abs(minutos))}`
+              : `+${fmtDuration(minutos)}`
+        const color =
+          minutos === null ? ui.ink2 : minutos <= 0 ? theme.red : minutos <= 120 ? theme.amber : theme.green
+        return { id, minutos, texto, color, clientes: propNum(f, 'CLITOTAL') }
+      })
+      .sort((a, b) => {
+        if (a.minutos === null) return b.minutos === null ? b.clientes - a.clientes : 1
+        if (b.minutos === null) return -1
+        return a.minutos - b.minutos
+      })
+      .slice(0, 9)
+      .reverse()
+    lastRows = rows
+    const maxAbs = Math.max(60, ...rows.map((r) => Math.abs(r.minutos ?? 0)))
     chart.setOption({
+      grid: { left: 6, right: 82, top: 14, bottom: 8, containLabel: true },
+      xAxis: {
+        type: 'value',
+        min: -maxAbs,
+        max: maxAbs,
+        axisLabel: {
+          ...axisText(),
+          formatter: (v: number) => (v === 0 ? 'AHORA' : `${v > 0 ? '+' : '−'}${fmtDuration(Math.abs(v))}`),
+        },
+        splitLine: splitLine(),
+        axisLine: axisLine(),
+      },
+      yAxis: {
+        type: 'category',
+        data: rows.map((r) => r.id),
+        axisLabel: {
+          ...axisText(),
+          fontSize: 9,
+          formatter: (v: string) => (v.length > 13 ? `…${v.slice(-12)}` : v),
+        },
+        axisLine: axisLine(),
+        axisTick: { show: false },
+      },
       series: [
         {
-          type: 'pie',
-          radius: ['52%', '76%'],
-          center: ['50%', '50%'],
-          data: slices.map(([name, value], i) => ({
-            name,
-            value,
-            itemStyle: {
-              color: name === 'Otros' ? ui.lineSoft : theme.chart[i % theme.chart.length],
-              borderColor: ui.panel,
-              borderWidth: 2,
-            },
+          type: 'bar',
+          data: rows.map((r) => ({
+            value: r.minutos ?? 0,
+            itemStyle: { color: r.color },
           })),
+          barMaxWidth: 11,
           label: {
+            show: true,
+            position: 'right',
             color: ui.ink,
-            fontSize: 9.5,
-            fontFamily: SANS,
-            formatter: (p: any) => `${p.name}\n${p.value}`,
+            fontSize: 9,
+            fontFamily: MONO,
+            fontWeight: 600,
+            formatter: (p: any) => rows[p.dataIndex]?.texto ?? '',
           },
-          labelLine: { lineStyle: { color: ui.ink2 }, length: 6, length2: 6 },
+          markLine: {
+            symbol: 'none',
+            silent: true,
+            lineStyle: { color: ui.ink, width: 1 },
+            label: { show: false },
+            data: [{ xAxis: 0 }],
+          },
         },
       ],
-      title: {
-        text: fmtNum(total),
-        subtext: 'TOTAL',
-        left: 'center',
-        top: '40%',
-        textStyle: { fontFamily: MONO, fontSize: 20, fontWeight: 700, color: ui.ink },
-        subtextStyle: { fontFamily: SANS, fontSize: 8.5, color: ui.ink2 },
-        itemGap: 0,
-      },
       tooltip: {
-        ...tooltipBase,
-        formatter: (p: any) => `${p.name}: <b style="font-family:${MONO}">${p.value}</b> (${p.percent}%)`,
+        ...tooltipBase(),
+        formatter: (p: any) => {
+          const row = rows[p.dataIndex]
+          return `<b>${escHtml(row.id)}</b><br/>Reposicion: <b>${row.texto}</b><br/>Clientes asociados: <b>${fmtNum(row.clientes)}</b>`
+        },
       },
     } as EChartsCoreOption)
   }
@@ -283,19 +399,19 @@ export function initRankingChart(el: HTMLElement, ctx: ChartCtx) {
       grid: { left: 6, right: 44, top: 8, bottom: 4, containLabel: true },
       xAxis: {
         type: 'value',
-        axisLabel: { ...axisText, formatter: (v: number) => (v >= 1000 ? `${v / 1000}k` : `${v}`) },
-        splitLine,
-        axisLine,
+        axisLabel: { ...axisText(), formatter: (v: number) => (v >= 1000 ? `${v / 1000}k` : `${v}`) },
+        splitLine: splitLine(),
+        axisLine: axisLine(),
       },
       yAxis: {
         type: 'category',
         data: rows.map((r) => r.id),
         axisLabel: {
-          ...axisText,
+          ...axisText(),
           fontSize: 9,
           formatter: (v: string) => (v.length > 10 ? `..${v.slice(-9)}` : v),
         },
-        axisLine,
+        axisLine: axisLine(),
         axisTick: { show: false },
       },
       series: [
@@ -318,8 +434,8 @@ export function initRankingChart(el: HTMLElement, ctx: ChartCtx) {
         },
       ],
       tooltip: {
-        ...tooltipBase,
-        formatter: (p: any) => `${p.name}<br/>Clientes: <b style="font-family:${MONO}">${fmtNum(p.value)}</b>`,
+        ...tooltipBase(),
+        formatter: (p: any) => `${escHtml(p.name)}<br/>Clientes: <b style="font-family:${MONO}">${fmtNum(p.value)}</b>`,
       },
     } as EChartsCoreOption)
   }
@@ -393,11 +509,39 @@ export function renderKpis(el: HTMLElement, kpis: Kpis): void {
   }).join('')
 }
 
+export function renderOperationalIndicators(
+  el: HTMLElement,
+  indicators: OperationalIndicators,
+): void {
+  const age = (value: number | null) => (value === null ? '—' : fmtDuration(value))
+  const delta = indicators.delta60m
+  const rows = [
+    { label: 'Presion 60m', value: fmtNum(indicators.nuevos60m), tone: 'cyan' },
+    {
+      label: 'vs hora previa',
+      value: `${delta > 0 ? '+' : ''}${fmtNum(delta)}`,
+      tone: delta > 0 ? 'red' : delta < 0 ? 'green' : 'neutral',
+    },
+    { label: 'Edad P50', value: age(indicators.edadMedianaMin), tone: 'neutral' },
+    { label: 'Edad P90', value: age(indicators.edadP90Min), tone: 'amber' },
+    { label: 'ETA vencidas', value: fmtNum(indicators.etaVencidas), tone: 'red' },
+    { label: 'Sin ETA', value: fmtNum(indicators.sinEta), tone: 'neutral' },
+  ]
+  el.innerHTML = rows
+    .map(
+      (row) => `<div class="op-stat op-${row.tone}">
+        <span class="op-value">${row.value}</span>
+        <span class="op-label">${row.label}</span>
+      </div>`,
+    )
+    .join('')
+}
+
 export function updateAllCharts(
   charts: {
     comunas: { update: (f: Feature[]) => void }
     timeline: { update: (a: Feature[], i: Feature[]) => void }
-    estados: { update: (i: Feature[]) => void }
+    eta: { update: (i: Feature[]) => void }
     ranking: { update: (i: Feature[]) => void }
   },
   data: AppData,
@@ -405,7 +549,7 @@ export function updateAllCharts(
 ): void {
   charts.comunas.update(visible.comunas)
   charts.timeline.update(visible.avisos, visible.incidencias)
-  charts.estados.update(visible.incidencias)
+  charts.eta.update(visible.incidencias)
   charts.ranking.update(visible.incidencias)
   void data
 }

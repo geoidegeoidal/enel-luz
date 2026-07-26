@@ -68,30 +68,37 @@
           </section>
           <section class="side-block" id="panel-charts">
             <h2 class="side-title"><span class="sq sq-red"></span>PANORAMA</h2>
+            <div id="scope-bar" aria-live="polite">
+              <div class="scope-copy">
+                <span class="scope-kicker">VISTA OPERATIVA</span>
+                <strong id="scope-label">RM</strong>
+                <span id="scope-detail">—</span>
+              </div>
+              <button id="scope-clear" class="hidden" type="button">VER RM</button>
+            </div>
+            <div id="ops-indicators" aria-label="Indicadores operativos"></div>
             <div class="chart-block">
-              <h3 class="chart-title">Clientes afectados por comuna <span class="legend-inline">severidad <i class="sw sw-green"></i> <i class="sw sw-amber"></i> <i class="sw sw-orange"></i> <i class="sw sw-red"></i></span></h3>
+              <h3 class="chart-title">Impacto comunal <span class="legend-inline">clientes · % local <i class="sw sw-green"></i> <i class="sw sw-amber"></i> <i class="sw sw-orange"></i> <i class="sw sw-red"></i></span></h3>
               <div class="chart tall" id="chart-comunas"></div>
             </div>
             <div class="chart-block">
-              <h3 class="chart-title">Inicios por hora <span class="legend-inline"><i class="sw sw-cyan"></i>avisos <i class="sw sw-orange"></i>incidencias</span></h3>
-              <div class="chart" id="chart-timeline"></div>
+              <h3 class="chart-title">Reloj operativo · ±12 h <span class="legend-inline"><i class="sw sw-cyan"></i>avisos <i class="sw sw-orange"></i>inicios <i class="sw sw-green"></i>ETA <i class="sw sw-red"></i>vencidas</span></h3>
+              <div class="chart chart-clock" id="chart-timeline"></div>
             </div>
-            <div class="chart-duo">
-              <div class="chart-block">
-                <h3 class="chart-title">Estado de incidencias</h3>
-                <div class="chart" id="chart-estados"></div>
-              </div>
-              <div class="chart-block">
-                <h3 class="chart-title">Top por clientes</h3>
-                <div class="chart" id="chart-ranking"></div>
-              </div>
+            <div class="chart-block">
+              <h3 class="chart-title">Escala de reposicion <span class="legend-inline"><i class="sw sw-red"></i>vencida <i class="sw sw-amber"></i>&lt;2 h <i class="sw sw-green"></i>programada</span></h3>
+              <div class="chart chart-eta" id="chart-eta"></div>
+            </div>
+            <div class="chart-block">
+              <h3 class="chart-title">Eventos con mas clientes asociados</h3>
+              <div class="chart chart-ranking" id="chart-ranking"></div>
             </div>
           </section>
         </aside>
       </main>
 
       <footer id="footer">
-        <span>DATOS: GeoJSON publicos mapaemergencia.enel.com (espejo c/5 min) &middot; MAPA: &copy; OSM contributors / OpenMapTiles / OpenFreeMap &middot; GEOCODING: Photon</span>
+        <span>DATOS: GeoJSON publicos mapaemergencia.enel.com (espejo automatico best-effort) &middot; MAPA: &copy; OSM contributors / OpenMapTiles / OpenFreeMap &middot; GEOCODING: Photon</span>
         <span>PROYECTO OPEN SOURCE NO OFICIAL &middot; SIN AFILIACION CON ENEL</span>
       </footer>
     </div>

@@ -3,6 +3,7 @@ import puppeteer from 'puppeteer-core'
 
 const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
 const OUT = './assets/'
+const PAGE_URL = process.argv[2] ?? 'http://localhost:4173/'
 
 const browser = await puppeteer.launch({
   executablePath: CHROME,
@@ -11,14 +12,14 @@ const browser = await puppeteer.launch({
   defaultViewport: { width: 1680, height: 1000 },
 })
 const page = await browser.newPage()
-await page.goto('http://localhost:4173/', { waitUntil: 'networkidle2', timeout: 60_000 })
+await page.goto(PAGE_URL, { waitUntil: 'networkidle2', timeout: 60_000 })
 await page.waitForFunction(() => !!window.__mapDebug, { timeout: 30_000 })
 await new Promise((r) => setTimeout(r, 4000))
 
 // 1) estado inicial (guia + mapa default)
 await page.screenshot({ path: OUT + 'final_initial.png' })
 
-// 2) sidebar abajo (donut + ranking)
+// 2) sidebar abajo (reloj operativo + escala ETA + ranking)
 await page.evaluate(() => {
   document.querySelector('#sidebar').scrollTop = 99999
 })

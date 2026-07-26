@@ -6,7 +6,10 @@ import type { Feature, Point } from 'geojson'
  * Fallback: Nominatim si Photon falla.
  */
 
-const RM_BBOX = '-71.45,-33.95,-70.20,-33.10' // minLon,minLat,maxLon,maxLat
+/** Área de concesión usada por el visor: minLon, minLat, maxLon, maxLat. */
+export const RM_BBOX = [-71.45, -33.95, -70.2, -33.1] as const
+const RM_BBOX_PARAM = RM_BBOX.join(',')
+const RM_VIEWBOX_PARAM = `${RM_BBOX[0]},${RM_BBOX[3]},${RM_BBOX[2]},${RM_BBOX[1]}`
 
 export interface SearchPick {
   point: Feature<Point>
@@ -35,38 +38,71 @@ function labelOf(p: PhotonFeature['properties']): { label: string; sub: string }
   return { label: label || sub || 'Resultado', sub }
 }
 
+export function isInsideRm([lon, lat]: [number, number]): boolean {
+  return lon >= RM_BBOX[0] && lon <= RM_BBOX[2] && lat >= RM_BBOX[1] && lat <= RM_BBOX[3]
+}
+
+export function buildPhotonUrl(q: string): string {
+  const params = new URLSearchParams({
+    q,
+    limit: '6',
+    lang: 'es',
+    bbox: RM_BBOX_PARAM,
+    countrycode: 'CL',
+    lon: '-70.66',
+    lat: '-33.45',
+    zoom: '10',
+  })
+  return `https://photon.komoot.io/api/?${params}`
+}
+
+export function buildNominatimUrl(q: string): string {
+  const params = new URLSearchParams({
+    format: 'jsonv2',
+    limit: '6',
+    countrycodes: 'cl',
+    viewbox: RM_VIEWBOX_PARAM,
+    bounded: '1',
+    q,
+  })
+  return `https://nominatim.openstreetmap.org/search?${params}`
+}
+
 async function photon(q: string): Promise<SearchPick[]> {
-  const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=6&lang=es`
-  const res = await fetch(url)
+  const res = await fetch(buildPhotonUrl(q))
   if (!res.ok) throw new Error(`Photon HTTP ${res.status}`)
   const json = await res.json()
-  return (json.features as PhotonFeature[]).map((f) => {
-    const { label, sub } = labelOf(f.properties)
-    return {
-      point: { type: 'Feature', geometry: { type: 'Point', coordinates: f.geometry.coordinates }, properties: {} },
-      label,
-      sub,
-    }
-  })
+  return (json.features as PhotonFeature[])
+    .filter((f) => isInsideRm(f.geometry.coordinates))
+    .map((f) => {
+      const { label, sub } = labelOf(f.properties)
+      return {
+        point: { type: 'Feature', geometry: { type: 'Point', coordinates: f.geometry.coordinates }, properties: {} },
+        label,
+        sub,
+      }
+    })
 }
 
 async function nominatim(q: string): Promise<SearchPick[]> {
-  const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=cl&bounded=0&q=${encodeURIComponent(q)}`
-  const res = await fetch(url, { headers: { Accept: 'application/json' } })
+  const res = await fetch(buildNominatimUrl(q), { headers: { Accept: 'application/json' } })
   if (!res.ok) throw new Error(`Nominatim HTTP ${res.status}`)
   const json = (await res.json()) as Array<{ lat: string; lon: string; display_name: string }>
-  return json.map((r) => {
-    const parts = r.display_name.split(',')
-    return {
-      point: {
-        type: 'Feature',
-        geometry: { type: 'Point', coordinates: [parseFloat(r.lon), parseFloat(r.lat)] },
-        properties: {},
-      },
-      label: parts.slice(0, 2).join(',').trim(),
-      sub: parts.slice(2, 5).join(',').trim(),
-    }
-  })
+  return json
+    .map((r) => ({ ...r, coords: [parseFloat(r.lon), parseFloat(r.lat)] as [number, number] }))
+    .filter((r) => isInsideRm(r.coords))
+    .map((r) => {
+      const parts = r.display_name.split(',')
+      return {
+        point: {
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: r.coords },
+          properties: {},
+        },
+        label: parts.slice(0, 2).join(',').trim(),
+        sub: parts.slice(2, 5).join(',').trim(),
+      }
+    })
 }
 
 export function attachSearch(
@@ -86,20 +122,26 @@ export function attachSearch(
   }
 
   const render = () => {
-    list.innerHTML = items
-      .map(
-        (it, i) => `<button type="button" role="option" class="sr-item ${i === sel ? 'selected' : ''}" data-i="${i}">
-          ${it.label}<span class="sr-sub">${it.sub}</span>
-        </button>`,
-      )
-      .join('')
-    list.classList.add('open')
-    list.querySelectorAll('.sr-item').forEach((el) =>
-      el.addEventListener('mousedown', (e) => {
+    const buttons = items.map((it, i) => {
+      const button = document.createElement('button')
+      button.type = 'button'
+      button.setAttribute('role', 'option')
+      button.setAttribute('aria-selected', String(i === sel))
+      button.className = `sr-item ${i === sel ? 'selected' : ''}`
+      button.dataset.i = String(i)
+      button.append(document.createTextNode(it.label))
+      const sub = document.createElement('span')
+      sub.className = 'sr-sub'
+      sub.textContent = it.sub
+      button.append(sub)
+      button.addEventListener('mousedown', (e) => {
         e.preventDefault()
-        pick(Number((el as HTMLElement).dataset.i))
-      }),
-    )
+        pick(i)
+      })
+      return button
+    })
+    list.replaceChildren(...buttons)
+    list.classList.add('open')
   }
 
   const pick = (i: number) => {

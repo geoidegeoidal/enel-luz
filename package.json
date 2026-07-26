@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test": "vitest run",
     "preview": "vite preview",
     "fetch-data": "node scripts/fetch-data.mjs"
   },
@@ -22,6 +23,7 @@
     "@types/geojson": "^7946.0.15",
     "puppeteer-core": "^25.3.0",
     "typescript": "^5.7.2",
-    "vite": "^6.0.7"
+    "vite": "^6.0.7",
+    "vitest": "^3.2.4"
   }
 }

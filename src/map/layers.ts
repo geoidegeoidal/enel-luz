@@ -324,12 +324,36 @@ export function setHexbinData(map: MLMap, fc: FeatureCollection): void {
 export function applyIdFilter(
   map: MLMap,
   ids: { avisos: string[]; incidencias: string[]; comunas: string[] } | null,
+  avisos: Feature<Point>[],
+  trafos: Feature[],
+  descargos: Feature[],
 ): void {
-  const avFilter: any = ids ? ['in', ['get', 'CODIGO'], ['literal', ids.avisos]] : true
-  const incFilter: any = ids ? ['in', ['get', 'INCIDENCIA'], ['literal', ids.incidencias]] : true
+  const featureIncId: any = [
+    'coalesce',
+    ['get', 'INCIDENCIA'],
+    ['get', 'CODIGO'],
+    ['get', 'numpos'],
+    '',
+  ]
+  const incFilter: any = ids ? ['in', featureIncId, ['literal', ids.incidencias]] : true
   const comFilter: any = ids ? ['in', ['get', 'COMUNA'], ['literal', ids.comunas]] : true
 
-  for (const id of [L.avisosPoints]) if (map.getLayer(id)) map.setFilter(id, ['all', ['!', ['has', 'point_count']], avFilter])
+  // Clusters y eventos duplicados se resuelven desde las fuentes, antes de los
+  // filtros de capa. Reemplazar las colecciones evita reintroducir geometrías
+  // externas que compartan INCIDENCIA con una geometría visible.
+  ;(map.getSource(S.avisos) as GeoJSONSource)?.setData({
+    type: 'FeatureCollection',
+    features: avisos,
+  })
+  ;(map.getSource(S.trafos) as GeoJSONSource)?.setData({
+    type: 'FeatureCollection',
+    features: trafos,
+  })
+  ;(map.getSource(S.descargos) as GeoJSONSource)?.setData({
+    type: 'FeatureCollection',
+    features: descargos,
+  })
+  if (map.getLayer(L.avisosPoints)) map.setFilter(L.avisosPoints, ['!', ['has', 'point_count']])
   for (const id of [L.trafosFill, L.trafosLine, L.descargosFill, L.descargosLine])
     if (map.getLayer(id)) map.setFilter(id, incFilter)
   for (const id of [L.comunasFill, L.comunasLine, L.comunasLabel])

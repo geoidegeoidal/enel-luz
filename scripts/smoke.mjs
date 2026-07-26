@@ -16,8 +16,43 @@ const logs = []
 page.on('console', (m) => logs.push(`[${m.type()}] ${m.text()}`))
 page.on('pageerror', (e) => logs.push(`[pageerror] ${e.message}`))
 page.on('requestfailed', (r) => logs.push(`[reqfail] ${r.url().slice(0, 110)} ${r.failure()?.errorText}`))
+await page.setRequestInterception(true)
+page.on('request', (request) => {
+  const url = request.url()
+  if (url.startsWith('https://photon.komoot.io/api/') && url.includes('Apoquindo')) {
+    void request.respond({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [-73.25, -39.81] },
+            properties: { name: 'Apoquindo fuera de RM', city: 'La Union' },
+          },
+          {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [-70.57, -33.41] },
+            properties: {
+              name: 'Apoquindo 4500',
+              district: '<img src=x onerror="window.__xss=1">',
+              city: 'Las Condes',
+            },
+          },
+        ],
+      }),
+    })
+  } else {
+    void request.continue()
+  }
+})
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+const assert = (condition, message) => {
+  if (!condition) throw new Error(`[smoke] ${message}`)
+}
 
 await page.goto(PAGE_URL, { waitUntil: 'networkidle2', timeout: 60_000 })
 
@@ -32,31 +67,76 @@ while (Date.now() - t0 < 30_000) {
   await sleep(500)
 }
 console.log('ready:', ready)
+assert(ready, 'la aplicación no alcanzó el estado listo')
 await sleep(2500)
 
 const mapState = await page.evaluate(() => window.__mapDebug?.())
 console.log('mapState.rendered:', mapState?.rendered, '| comunas:', mapState?.comunasRendered)
+assert(mapState?.layers?.includes('ly-comunas-fill'), 'faltan capas de datos')
 
-// 2) busqueda Photon: escribir y esperar resultados
+// 2) cross-filter: una comuna gobierna contexto, mapa y panel; luego se puede limpiar
+await page.evaluate((nombre) => window.__selectComunaDebug?.(nombre), mapState?.firstComuna)
+await sleep(900)
+const scoped = await page.evaluate(() => ({
+  selected: window.__mapDebug?.().selectedComuna,
+  visible: window.__mapDebug?.().visibleSummary,
+  label: document.querySelector('#scope-label')?.textContent?.trim(),
+  clearVisible: !document.querySelector('#scope-clear')?.classList.contains('hidden'),
+  chartCount: document.querySelectorAll('#panel-charts canvas').length,
+}))
+assert(scoped.selected === mapState?.firstComuna, 'la comuna no quedo seleccionada')
+assert(
+  scoped.label?.includes(mapState?.firstComuna?.replaceAll('_', ' ')),
+  'el contexto no refleja la comuna',
+)
+assert(scoped.clearVisible, 'no se ofrecio restaurar la vista RM')
+assert(scoped.visible?.comunas === 1, 'el alcance no se limito a una comuna')
+assert(scoped.visible?.avisos <= mapState?.visibleSummary?.avisos, 'aumentaron avisos al filtrar')
+assert(scoped.visible?.eventos <= mapState?.visibleSummary?.eventos, 'aumentaron eventos al filtrar')
+assert(scoped.chartCount === 4, 'los graficos desaparecieron durante el cross-filter')
+await page.click('#scope-clear')
+await sleep(500)
+const restored = await page.evaluate(() => window.__mapDebug?.())
+assert(restored?.selectedComuna === null, 'el cross-filter no se limpio')
+assert(
+  restored?.visibleSummary?.avisos === mapState?.visibleSummary?.avisos &&
+    restored?.visibleSummary?.eventos === mapState?.visibleSummary?.eventos,
+  'la vista RM no restauro sus conteos',
+)
+
+// 3) busqueda Photon: escribir y esperar resultados
 await page.click('#search-input')
 await page.type('#search-input', 'Apoquindo 4500', { delay: 25 })
 let searchOk = false
 try {
   await page.waitForSelector('#search-results .sr-item', { timeout: 8000 })
   searchOk = true
-  await page.click('#search-results .sr-item')
-  await sleep(1500)
 } catch {
   console.log('search: sin resultados a tiempo')
+}
+if (searchOk) {
+  const safeSearchDom = await page.evaluate(
+    () => !document.querySelector('#search-results img') && !window.__xss,
+  )
+  assert(safeSearchDom, 'el geocoder inyectó HTML en los resultados')
+  await page.click('#search-results .sr-item')
+  await sleep(1500)
 }
 const affected = await page.evaluate(
   () => document.querySelector('#analysis-body .verdict')?.textContent?.trim() ?? 'sin verdict',
 )
 console.log('search:', searchOk, '| verdict:', affected)
+assert(searchOk, 'el buscador no devolvió resultados')
+const searchState = await page.evaluate(() => window.__mapDebug?.())
+const [lon, lat] = searchState?.center ?? []
+assert(
+  lon >= -71.45 && lon <= -70.2 && lat >= -33.95 && lat <= -33.1,
+  `la búsqueda salió de la RM: ${lon},${lat}`,
+)
 
-// 3) herramienta "Mas cercana": armar y click en centro del mapa
+// 4) herramienta "Mas cercana": armar y click en centro del mapa
 await page.evaluate(() => {
-  const btns = [...document.querySelectorAll('#toolbar button')]
+  const btns = [...document.querySelectorAll('#analysis-tools button')]
   btns.find((b) => b.textContent.includes('Mas cercana'))?.click()
 })
 await sleep(400)
@@ -66,10 +146,11 @@ const nearest = await page.evaluate(
   () => document.querySelector('#analysis-body .verdict')?.textContent?.trim() ?? 'sin verdict',
 )
 console.log('nearest verdict:', nearest)
+assert(nearest.includes('INCIDENCIA MAS CERCANA'), 'la herramienta de incidencia cercana no respondió')
 
-// 4) herramienta "Radio"
+// 5) herramienta "Radio"
 await page.evaluate(() => {
-  const btns = [...document.querySelectorAll('#toolbar button')]
+  const btns = [...document.querySelectorAll('#analysis-tools button')]
   btns.find((b) => b.textContent.trim().startsWith('Radio'))?.click()
 })
 await sleep(400)
@@ -79,14 +160,24 @@ const radio = await page.evaluate(
   () => document.querySelector('#analysis-body .verdict')?.textContent?.trim() ?? 'sin verdict',
 )
 console.log('radio verdict:', radio)
+assert(radio.includes('RADIO DE'), 'la herramienta de radio no respondió')
 
-// 5) hexbin toggle
+// 6) hexbin toggle
 await page.evaluate(() => {
-  ;[...document.querySelectorAll('#toolbar button')].find((b) => b.textContent.includes('Densidad'))?.click()
+  document.querySelector('[data-eye="hexbin"]')?.click()
 })
 await sleep(1800)
 const hex = await page.evaluate(() => window.__mapDebug?.())
 console.log('hexbin rendered features:', hex?.rendered)
+assert(hex?.hexbinVisibility === 'visible', 'la capa hexbin no quedó visible')
+
+// 7) tema UI: ambos modos deben aplicarse sin recrear la app
+await page.click('#theme-toggle')
+await sleep(400)
+const darkMode = await page.evaluate(() => window.__mapDebug?.().uiMode)
+assert(darkMode === 'dark', 'el modo oscuro de la UI no se aplicó')
+await page.click('#theme-toggle')
+await sleep(250)
 
 await page.screenshot({ path: SHOT })
 console.log('--- logs relevantes ---')
