@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="360" viewBox="0 0 1680 360" role="img" aria-labelledby="title desc">
+  <title id="title">ENEL·LUZ — Centro de control de cortes</title>
+  <desc id="desc">Cabecera editorial inspirada en el panel operativo, con seis módulos de estado.</desc>
+  <rect width="1680" height="360" fill="#f2f0e9"/>
+  <rect width="1680" height="8" fill="#e4002b"/>
+  <rect y="8" width="1680" height="210" fill="#141414"/>
+  <rect x="0" y="218" width="280" height="142" fill="#e4002b"/>
+  <rect x="280" y="218" width="280" height="142" fill="#141414"/>
+  <rect x="560" y="218" width="280" height="142" fill="#141414"/>
+  <rect x="840" y="218" width="280" height="142" fill="#141414"/>
+  <rect x="1120" y="218" width="280" height="142" fill="#141414"/>
+  <rect x="1400" y="218" width="280" height="142" fill="#141414"/>
+  <g stroke="#3b3b37" stroke-width="1">
+    <path d="M280 218v142M560 218v142M840 218v142M1120 218v142M1400 218v142"/>
+  </g>
+  <rect x="0" y="356" width="1680" height="4" fill="#00a0dc"/>
+
+  <g font-family="Arial, Helvetica, sans-serif" fill="#ffffff">
+    <rect x="48" y="52" width="64" height="64" fill="#e4002b"/>
+    <path d="M85 63 66 91h15l-8 20 25-31H84z" fill="#ffffff"/>
+    <text x="140" y="89" font-size="42" font-weight="700" letter-spacing="1">ENEL·LUZ</text>
+    <text x="142" y="116" font-size="15" letter-spacing="6" fill="#d8d5cb">CENTRO DE CONTROL DE CORTES</text>
+    <text x="48" y="172" font-size="20" font-weight="700" letter-spacing="3">REGIÓN METROPOLITANA · SNAPSHOT OPERATIVO</text>
+    <text x="1268" y="72" font-size="15" font-weight="700" letter-spacing="2">PROYECTO OPEN SOURCE</text>
+    <text x="1268" y="101" font-size="15" letter-spacing="2" fill="#d8d5cb">100% CLIENT-SIDE</text>
+    <rect x="1268" y="139" width="12" height="12" fill="#12a150"/>
+    <text x="1292" y="151" font-family="Consolas, monospace" font-size="16" font-weight="700">EN VIVO · DATOS ABIERTOS</text>
+  </g>
+
+  <g font-family="Consolas, 'Courier New', monospace">
+    <g fill="#ffffff">
+      <text x="32" y="274" font-size="36" font-weight="700">01</text>
+      <text x="32" y="310" font-size="14" font-weight="700" letter-spacing="1.5">IMPACTO</text>
+      <text x="32" y="336" font-size="12">CLIENTES · SUMINISTRO</text>
+    </g>
+    <g>
+      <text x="312" y="274" font-size="36" font-weight="700" fill="#e3a008">02</text>
+      <text x="312" y="310" font-size="14" font-weight="700" letter-spacing="1.5" fill="#ffffff">INCIDENCIAS</text>
+      <text x="312" y="336" font-size="12" fill="#d8d5cb">EVENTOS DEDUPLICADOS</text>
+    </g>
+    <g>
+      <text x="592" y="274" font-size="36" font-weight="700" fill="#00a0dc">03</text>
+      <text x="592" y="310" font-size="14" font-weight="700" letter-spacing="1.5" fill="#ffffff">AVISOS</text>
+      <text x="592" y="336" font-size="12" fill="#d8d5cb">REPORTES DE CLIENTES</text>
+    </g>
+    <g>
+      <text x="872" y="274" font-size="36" font-weight="700" fill="#ea6a00">04</text>
+      <text x="872" y="310" font-size="14" font-weight="700" letter-spacing="1.5" fill="#ffffff">PRESIÓN</text>
+      <text x="872" y="336" font-size="12" fill="#d8d5cb">VENTANA DE 60 MIN</text>
+    </g>
+    <g>
+      <text x="1152" y="274" font-size="36" font-weight="700" fill="#e4002b">05</text>
+      <text x="1152" y="310" font-size="14" font-weight="700" letter-spacing="1.5" fill="#ffffff">REPOSICIÓN</text>
+      <text x="1152" y="336" font-size="12" fill="#d8d5cb">ETA · VENCIDAS · SIN ETA</text>
+    </g>
+    <g>
+      <text x="1432" y="274" font-size="36" font-weight="700" fill="#12a150">06</text>
+      <text x="1432" y="310" font-size="14" font-weight="700" letter-spacing="1.5" fill="#ffffff">ALCANCE</text>
+      <text x="1432" y="336" font-size="12" fill="#d8d5cb">RM · COMUNA · ÁREA</text>
+    </g>
+  </g>
+</svg>

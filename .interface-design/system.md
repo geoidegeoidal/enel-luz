@@ -97,6 +97,9 @@ se separan por papel/panel y lineas.
 - Matriz 3 x 2 en celdas compactas.
 - Orden: presion 60m, cambio hora previa, edad P50, edad P90, ETA vencidas,
   eventos sin ETA.
+- Debajo de la matriz, una guia siempre visible define los seis indicadores,
+  explica el signo del cambio y aclara alcance y deduplicacion. No depender de
+  tooltips para conceptos necesarios para interpretar el dato.
 - Rojo implica accion/atraso; ambar implica vigilancia; cian telemetria; verde
   mejora o programacion saludable.
 
@@ -123,6 +126,20 @@ se separan por papel/panel y lineas.
 - Fondo blanco para impresion; tinta carbon y los mismos colores semanticos.
 - Encabezado, pie, numero de pagina y aviso de proyecto no oficial obligatorios.
 - Sin tarjetas flotantes: modulos editoriales unidos por una reticula de bordes.
+
+### Documentacion GitHub
+
+- El README funciona como portada editorial del centro de mando, no como lista
+  de funcionalidades ni como pagina de marketing generica.
+- Cabecera vectorial con franja roja, banda carbon, linea cian y seis modulos
+  operativos; mantiene la firma visual aun dentro de las restricciones de
+  GitHub Markdown.
+- Orden narrativo: preguntas operativas, vistas reales, definiciones,
+  arquitectura, reglas de integridad, tecnologia y puesta en marcha.
+- Las capturas se regeneran desde produccion local con
+  `scripts/readme-shots.mjs`; nunca documentar paneles con mockups.
+- Diagramas Mermaid usan los mismos colores semanticos: carbon para nucleo,
+  rojo para alcance/accion, cian para datos y verde para publicacion.
 
 ## Movimiento y estados
 

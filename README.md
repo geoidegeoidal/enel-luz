@@ -1,125 +1,231 @@
-# ENEL·LUZ — Centro de Control de Cortes de Energía
+<p align="center">
+  <img src="assets/readme-header.svg" width="100%" alt="ENEL·LUZ — Centro de control de cortes de energía">
+</p>
 
-Visor de **control de mando** para los cortes de energía de Enel Chile (zona RM), diseñado bajo una estricta arquitectura **100% client-side**. Sin backend propio, todo el procesamiento geoespacial ocurre en tiempo real en tu navegador.
+<p align="center">
+  <strong>Un centro de mando territorial para interpretar cortes de energía en la Región Metropolitana.</strong><br>
+  Mapa, alcance espacial, presión operativa, reposición y reportes PDF en una sola aplicación estática.
+</p>
 
-> ⚠️ Proyecto **no oficial**, sin afiliación con Enel. Los datos provienen de los archivos GeoJSON públicos que alimentan el mapa oficial de cortes, espejados automáticamente mediante GitHub Actions (cron solicitado cada 5 minutos, ejecución best-effort).
+<p align="center">
+  <a href="https://geoidegeoidal.github.io/enel-luz/"><strong>ABRIR CENTRO DE CONTROL ↗</strong></a>
+  &nbsp;·&nbsp;
+  <a href="#puesta-en-marcha">EJECUTAR LOCALMENTE</a>
+  &nbsp;·&nbsp;
+  <a href="#arquitectura">VER ARQUITECTURA</a>
+</p>
 
-![flat design](https://img.shields.io/badge/dise%C3%B1o-flat-141414)
-![client-side](https://img.shields.io/badge/procesamiento-100%25%20browser-12a150)
-![datos](https://img.shields.io/badge/datos-espejo%20autom%C3%A1tico-00a0dc)
-
-## 🚀 ¿Por qué es mejor que el mapa oficial de Enel?
-
-El mapa oficial de Enel sufre de tiempos de carga prolongados, un diseño genérico de Google Maps sobrecargado visualmente, y carece de herramientas de análisis para el usuario. **ENEL·LUZ** soluciona esto mediante:
-
-1. **Rendimiento Extremo**: Al descargar los datos crudos (GeoJSON) y procesarlos en el cliente con Turf.js, el mapa vuela. No hay tiempos de espera por consultas lentas a bases de datos en el servidor.
-2. **Diseño de "Panel de Instrumentos" (Flat Design)**: En lugar del clásico mapa blanco con burbujas, ENEL·LUZ utiliza un diseño estricto tipo papel y tinta, con jerarquía basada en bloques de colores sólidos (cero sombras, cero gradientes). Esto reduce la fatiga visual y permite detectar las zonas críticas instantáneamente.
-3. **Analítica Integrada**: El mapa oficial solo te muestra dónde hay cortes. Esta plataforma cruza mapa, KPIs y gráficos por comuna o polígono; incorpora un reloj operativo de presión y reposición, edades P50/P90, ETA vencidas y ranking de eventos, ofreciendo un verdadero *centro de mando* de la crisis.
-4. **Herramientas de Geoproceso Clientes**: Puedes dibujar zonas en el mapa para filtrar datos, hacer clics para ver incidencias en un radio de 500m, y utilizar un buscador acotado a la Región Metropolitana que te dice si tu casa está dentro de un polígono de corte sin necesidad de cruzar datos con el servidor de Enel.
+> [!IMPORTANT]
+> **Proyecto no oficial y sin afiliación con Enel.** Los datos provienen de los GeoJSON públicos que alimentan el mapa de emergencia de Enel Chile. El espejo automático es _best-effort_: la hora **DATOS** de la interfaz indica la publicación efectiva del snapshot.
 
 ---
 
-## 📸 Interfaz y Funcionalidades
+## 01 · Qué permite responder
 
-### 1. Panel Principal y Mapa Vectorial
-La vista principal ofrece un mapa interactivo renderizado por MapLibre GL JS, con tres mapas base (Oscuro, Claro y Satelital). A la izquierda, un gestor de capas estilo Kepler.gl te permite controlar la visibilidad y ver el conteo en tiempo real de trafos, descargos y avisos.
+| IMPACTO | TERRITORIO | TIEMPO OPERATIVO |
+|:--|:--|:--|
+| ¿Cuántos clientes y qué porcentaje del suministro están afectados? | ¿En qué comunas, incidencias o áreas dibujadas se concentra la situación? | ¿La presión aumenta? ¿Qué ETA están vencidas, próximas o ausentes? |
+| KPIs deduplicados y severidad por umbrales. | Mapa, clusters, hexbin y _cross-filter_ espacial. | Reloj ±12 h, edades P50/P90 y escala de reposición. |
 
-<img src="assets/final_initial.png" width="800" alt="Interfaz Principal">
+La aplicación no es solamente un mapa de polígonos. Convierte el snapshot activo en una lectura operacional consistente: cualquier selección por **RM**, **comuna** o **área dibujada** actualiza mapa, indicadores, gráficos, diagnóstico y reporte.
 
-### 2. Panel de Análisis y Buscador Inteligente
-El panel lateral derecho alberga herramientas interactivas. Cuenta con un buscador (geocoding vía Photon, con fallback Nominatim) restringido a la Región Metropolitana para saltar a una dirección y confirmar si está afectada. Además, incluye herramientas de selección por radio, dibujo de polígonos libres y localización de incidencias más cercanas.
+---
 
-<img src="assets/final_diag.png" width="800" alt="Herramientas de Análisis">
+## 02 · Vistas del centro de mando
 
-### 3. Analítica y Gráficos Interactivos
-Mientras navegas por el mapa, todos los indicadores se actualizan con el mismo
-alcance espacial. Seleccionar una comuna filtra puntos, clusters, hexbin, KPIs y
-gráficos, con un control visible para regresar a toda la RM.
+### Panorama territorial
 
-El **reloj operativo** centra las últimas y próximas 12 horas alrededor de
-“AHORA”: muestra inicios de avisos/incidencias, reposiciones programadas y ETA
-ya vencidas. La escala de reposición ordena los eventos por urgencia, mientras
-los indicadores compactos muestran presión de la última hora, variación contra
-la hora anterior, edades P50/P90 y eventos sin ETA.
+La vista principal une la banda KPI, el mapa MapLibre, el gestor de capas y el panorama analítico. Los polígonos representan severidad comunal; las incidencias, descargos y avisos siguen disponibles como capas operativas independientes.
 
-Estas métricas se calculan sobre el snapshot activo; no se presentan como una
-serie histórica de eventos ya cerrados.
+<img src="assets/final_initial.png" width="100%" alt="Vista general del centro de control ENEL·LUZ">
 
-<img src="assets/final_charts.png" width="800" alt="Gráficos y Estadísticas">
+### Indicadores con definición visible
 
-### 4. Reporte operativo PDF
+Los valores no quedan a interpretación del lector. La guía **CÓMO LEER** define la ventana temporal, el signo de la variación, los percentiles de edad y el estado de las ETA. También declara el alcance activo y la deduplicación de eventos.
 
-El control **REPORTE PDF** genera una vista editorial de dos páginas sobre el
-alcance activo:
+<p align="center">
+  <img src="assets/panel_indicators.png" width="560" alt="Panel de indicadores operativos y guía de lectura">
+</p>
 
-- En vista RM, resume la situación regional completa.
-- Al seleccionar una comuna desde el mapa o el gráfico de impacto, genera el
-  reporte comunal incluyendo todas las geometrías publicadas para ese nombre.
-- Si existe un polígono dibujado, conserva también ese recorte espacial.
+| INDICADOR | LECTURA OPERATIVA |
+|:--|:--|
+| **Presión 60m** | Avisos e inicios de eventos registrados durante los últimos 60 minutos. |
+| **Vs hora previa** | Diferencia frente a los 60 minutos anteriores: positivo aumenta; negativo disminuye. |
+| **Edad P50** | Mediana de antigüedad de los eventos activos. |
+| **Edad P90** | Cola más antigua: el 90% de los eventos tiene una edad igual o menor. |
+| **ETA vencidas** | Eventos cuya estimación de reposición ya pasó y requiere actualización. |
+| **Sin ETA** | Eventos activos sin fecha estimada de reposición publicada. |
 
-La primera página reúne KPIs, frescura e indicadores operativos. Su mapa combina
-severidad comunal, incidencias activas como rombos naranjas y avisos de clientes
-como puntos cian, todos filtrados por el alcance. La segunda contiene el reloj
-±12 h, escala ETA, eventos prioritarios, impacto comunal y metodología.
-**IMPRIMIR / GUARDAR PDF** abre el diálogo del navegador para imprimir o elegir
-“Guardar como PDF”; no se envían datos a ningún servidor.
+> **Método:** “evento” significa incidencia o descargo deduplicado por ID. Las métricas se calculan sobre el snapshot y alcance activos; no constituyen una serie histórica de eventos cerrados.
 
-Para verificar la plantilla desde desarrollo, con `npm run preview` activo:
+### Reloj, reposición y prioridad
+
+El **reloj operativo ±12 h** mantiene `AHORA` en el centro: inicios y avisos quedan a la izquierda; ETA futuras y vencidas, a la derecha. La escala de reposición ordena los eventos por urgencia y el ranking evita inflar clientes cuando una incidencia tiene varias geometrías.
+
+<img src="assets/final_charts.png" width="100%" alt="Panel de gráficos operativos, reloj, reposición y ranking">
+
+### Diagnóstico espacial
+
+El buscador está limitado a la RM. También es posible consultar un radio de 500 m, dibujar un polígono de análisis y localizar la incidencia más cercana. El resultado conserva el mismo contexto visual del centro de mando.
+
+<img src="assets/final_diag.png" width="100%" alt="Diagnóstico territorial a partir de una dirección">
+
+### Reporte regional o comunal en PDF
+
+El reporte reutiliza el alcance activo y genera dos páginas A4 apaisadas sin enviar datos a un servidor. El mapa editorial muestra simultáneamente severidad comunal, incidencias activas como rombos naranjas y avisos de clientes como puntos cian.
+
+<p align="center">
+  <img src="assets/panel_report.png" width="900" alt="Primera página del reporte operativo PDF">
+</p>
+
+- **Página 1:** alcance, frescura, KPIs, mapa operacional, lectura ejecutiva e indicadores.
+- **Página 2:** reloj ±12 h, escala ETA, eventos prioritarios, impacto comunal y metodología.
+- **Exportación:** `IMPRIMIR / GUARDAR PDF` utiliza el diálogo nativo del navegador.
+
+---
+
+## 03 · Arquitectura
+
+### Flujo de datos y publicación
+
+```mermaid
+flowchart LR
+  A["ENEL CHILE<br/>GeoJSON públicos<br/>sin CORS"] -->|cron solicitado */5 min| B["GITHUB ACTIONS<br/>update-data.yml"]
+  B --> C{"¿Cambió<br/>el timestamp?"}
+  C -->|no| D["Sin commit"]
+  C -->|sí| E["ESPEJO MISMO ORIGEN<br/>public/data/*"]
+  E --> F["Commit automático<br/>de datos"]
+  F --> G["VITE BUILD<br/>artefacto estático"]
+  G --> H["GITHUB PAGES"]
+  H --> I["NAVEGADOR<br/>mapa + análisis + PDF"]
+
+  classDef source fill:#141414,color:#fff,stroke:#141414;
+  classDef action fill:#00a0dc,color:#fff,stroke:#141414;
+  classDef decision fill:#e3a008,color:#141414,stroke:#141414;
+  classDef data fill:#f2f0e9,color:#141414,stroke:#141414;
+  classDef publish fill:#12a150,color:#fff,stroke:#141414;
+  classDef client fill:#e4002b,color:#fff,stroke:#141414;
+  class A source;
+  class B action;
+  class C decision;
+  class D,E,F,G data;
+  class H publish;
+  class I client;
+```
+
+El navegador no consulta directamente a Enel porque el origen no entrega cabeceras CORS. GitHub Actions mantiene un espejo estático y solo confirma el nuevo estado después de descargar las capas. Cada cambio de datos reconstruye el artefacto completo de Pages.
+
+### Arquitectura dentro del navegador
+
+```mermaid
+flowchart TB
+  L["LOADER<br/>valida JSON y tolera capas opcionales"] --> M["MODELO<br/>normaliza fechas · comunas · severidad"]
+  M --> U["EVENTOS ÚNICOS<br/>dedupeIncidencias + descargos"]
+  U --> S["STORE CENTRAL<br/>data · selectedComuna · filterPoly"]
+  S --> X["MOTOR DE ALCANCE<br/>RM · comuna · intersección dibujada"]
+
+  X --> MAP["MAPLIBRE GL JS<br/>capas · clusters · hexbin"]
+  X --> KPI["INDICADORES<br/>KPIs · presión · edad · ETA"]
+  X --> CH["ECHARTS<br/>impacto · reloj · reposición · ranking"]
+  X --> GEO["TURF.JS<br/>punto · radio · polígono · proximidad"]
+  X --> PDF["REPORTE CLIENT-SIDE<br/>SVG + HTML de impresión"]
+
+  classDef core fill:#141414,color:#fff,stroke:#141414;
+  classDef scope fill:#e4002b,color:#fff,stroke:#141414;
+  classDef output fill:#f2f0e9,color:#141414,stroke:#141414;
+  classDef info fill:#00a0dc,color:#fff,stroke:#141414;
+  class L,M,U,S core;
+  class X scope;
+  class MAP,KPI,CH,GEO output;
+  class PDF info;
+```
+
+### Capas del proyecto
+
+| CAPA | RESPONSABILIDAD | ARCHIVOS PRINCIPALES |
+|:--|:--|:--|
+| Datos | Descarga, validación y modelo normalizado. | `scripts/fetch-data.mjs`, `src/data/` |
+| Estado | Snapshot y alcance espacial compartidos. | `src/state.ts`, `src/main.ts` |
+| Mapa | Estilos base, fuentes, capas, popups y filtros. | `src/map/`, `src/geo/` |
+| Analítica | KPIs y cuatro visualizaciones ECharts. | `src/charts/charts.ts` |
+| Interfaz | Paneles, herramientas, leyendas y temas. | `src/ui/ui.ts`, `src/style.css` |
+| Reporte | Modelo editorial, SVG operacional e impresión. | `src/report/report.ts` |
+| Operación | Actualización de datos, build y Pages. | `.github/workflows/` |
+
+---
+
+## 04 · Reglas de integridad
+
+Estas decisiones evitan que una interfaz visualmente correcta entregue cifras equivocadas:
+
+- **Una incidencia puede tener varios polígonos.** `CLITOTAL` ya representa el total del evento: se deduplica por `INCIDENCIA` y se usa el máximo; nunca se suma entre geometrías.
+- **Una comuna puede venir fragmentada.** Se combinan todas sus geometrías, se suman afectados y `CLIENTESTOTAL` se considera una sola vez.
+- **Comuna + polígono dibujado usa intersección real.** No basta comprobar cada geometría por separado.
+- **Las fechas se interpretan en `America/Santiago`.** No se hereda la zona horaria del navegador.
+- **El reloj no es historia persistida.** Describe únicamente eventos presentes en el snapshot activo.
+- **La frescura se muestra, no se presume.** El cron de GitHub es _best-effort_ y puede atrasarse.
+
+---
+
+## 05 · Tecnología
+
+| VISUALIZACIÓN | GEOPROCESO | PLATAFORMA |
+|:--|:--|:--|
+| MapLibre GL JS | Turf.js | Vite 6 + TypeScript |
+| Apache ECharts | Photon + Nominatim | GitHub Actions + Pages |
+| OpenFreeMap / OpenMapTiles | GeoJSON en el navegador | IBM Plex Sans + Mono |
+
+La arquitectura es **100% client-side**: no existe backend propio, base de datos ni telemetría de usuario.
+
+---
+
+## 06 · Puesta en marcha
+
+Requisitos: Node.js y Google Chrome para las pruebas E2E/capturas.
+
+```bash
+npm install
+npm run fetch-data       # actualiza el espejo en public/data/
+npm run dev              # desarrollo: http://localhost:5173
+npm test                 # pruebas unitarias
+npm run build            # producción: dist/
+npm run preview          # preview: http://localhost:4173
+node scripts/smoke.mjs http://localhost:4173/
+```
+
+Generación reproducible del reporte:
 
 ```bash
 node scripts/report-pdf.mjs http://localhost:4173/ RM output/pdf/reporte-rm.pdf
 node scripts/report-pdf.mjs http://localhost:4173/ COLINA output/pdf/reporte-colina.pdf
 ```
 
----
-
-## Arquitectura
-
-```text
-Enel (GeoJSON públicos, sin CORS)
-   │  GitHub Actions cron solicitado */5 min, best-effort
-   ▼
-public/data/*.geojson          ← espejo mismo-origen, commit solo si hay cambios
-   │  build estático (Vite + TS vanilla)
-   ▼
-GitHub Pages                   (.github/workflows/deploy.yml)
-```
-
-Costo total de infraestructura: **$0** (Actions y Pages son gratis en repos públicos).
-El cron se solicita cada 5 minutos, pero GitHub Actions no garantiza esa
-frecuencia y puede ejecutarlo con bastante retraso bajo carga.
-
-## Desarrollo
+Capturas editoriales del README:
 
 ```bash
-npm install
-npm run fetch-data   # descarga/actualiza el espejo en public/data/
-npm run dev          # entorno de desarrollo en http://localhost:5173
-npm test             # pruebas de regresión
-npm run build        # build de producción a dist/
-npm run preview      # sirve dist/ en http://localhost:4173
+node scripts/readme-shots.mjs http://localhost:4173/
 ```
 
-## Deploy propio (fork)
+---
 
-1. Haz fork o sube este código a un repo **público**
-2. **Settings → Pages → Build and deployment → GitHub Actions**
-3. Listo: `deploy.yml` publica en cada push a `main`; cuando `update-data.yml`
-   detecta cambios, crea el commit y llama explícitamente al mismo workflow para
-   reconstruir el artefacto de Pages con los nuevos JSON.
+## 07 · Publicar un fork
 
-> GitHub desactiva los workflows programados tras 60 días sin actividad del repo; se reactivan con un clic en la pestaña Actions.
+1. Haz un fork en un repositorio público.
+2. En **Settings → Pages → Build and deployment**, selecciona **GitHub Actions**.
+3. Un push a `main` ejecutará `.github/workflows/deploy.yml`.
+4. Cuando `update-data.yml` detecte datos nuevos, generará un commit y reconstruirá Pages.
 
-## Stack Tecnológico
+> [!NOTE]
+> GitHub puede desactivar workflows programados después de 60 días sin actividad. Se reactivan desde la pestaña **Actions**.
 
-- **Vite 6** · **TypeScript vanilla**
-- **MapLibre GL JS** (Renderizado WebGL rápido)
-- **Apache ECharts** (Visualización de datos)
-- **Turf.js** (Geoprocesos vectoriales)
-- **OpenFreeMap / OpenMapTiles** (Mapas base vectoriales gratuitos)
-- **Esri World Imagery** (Satélite)
-- **Photon / Nominatim** (Geocoding de OpenStreetMap)
+---
 
-## Licencia
+## 08 · Licencia y atribuciones
 
-MIT — ver [LICENSE](LICENSE). Los datos de cortes pertenecen a Enel Chile; los mapas base a © OpenStreetMap contributors / OpenMapTiles / Esri según corresponda.
+Código bajo licencia [MIT](LICENSE).
+
+- Datos de cortes: Enel Chile.
+- Cartografía: © OpenStreetMap contributors, OpenMapTiles, OpenFreeMap y Esri, según la capa utilizada.
+- Geocoding: Photon y Nominatim.
+
+**ENEL·LUZ es un proyecto independiente, abierto y no oficial.**

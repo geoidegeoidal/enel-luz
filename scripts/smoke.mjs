@@ -73,6 +73,18 @@ await sleep(2500)
 const mapState = await page.evaluate(() => window.__mapDebug?.())
 console.log('mapState.rendered:', mapState?.rendered, '| comunas:', mapState?.comunasRendered)
 assert(mapState?.layers?.includes('ly-comunas-fill'), 'faltan capas de datos')
+const indicatorGuide = await page.evaluate(() => ({
+  definitions: document.querySelectorAll('#ops-guide .ops-definition').length,
+  text: document.querySelector('#ops-guide')?.textContent ?? '',
+  method: document.querySelector('#ops-guide .ops-method')?.textContent ?? '',
+}))
+assert(indicatorGuide.definitions === 6, 'la guia no define los seis indicadores operativos')
+assert(
+  indicatorGuide.text.includes('PRESION 60M') &&
+    indicatorGuide.text.includes('ETA VENCIDAS') &&
+    indicatorGuide.method.includes('deduplicado por ID'),
+  'la guia de indicadores esta incompleta',
+)
 
 // 2) cross-filter: una comuna gobierna contexto, mapa y panel; luego se puede limpiar
 await page.evaluate((nombre) => window.__selectComunaDebug?.(nombre), mapState?.firstComuna)

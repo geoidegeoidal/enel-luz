@@ -24,6 +24,11 @@ apaisadas, mapa SVG operacional, KPIs, indicadores, reloj ±12 h, escala ETA,
 tablas de prioridad, timestamp, frescura y nota metodológica. Tras feedback del
 usuario se elevó la escala tipográfica y el mapa ahora superpone incidencias
 activas como rombos naranjas y avisos como puntos cian, con leyenda cuantificada.
+Posteriormente se agrego localmente una guia persistente para explicar los seis
+indicadores operativos del dashboard. El README tambien fue reconstruido como
+portada editorial del centro de mando, con capturas reales actuales, definiciones
+de indicadores y dos diagramas Mermaid de arquitectura. Estos ajustes aun no
+tienen commit.
 
 Durante la revisión PDF se detectó que Enel puede publicar varias geometrías con
 el mismo nombre de comuna (caso COLINA). El cross-filter, los KPIs, el ranking y
@@ -36,8 +41,9 @@ reportes RM/comuna. Se generaron y revisaron visualmente cuatro páginas reales:
 `output/pdf/enel-luz-reporte-colina.pdf`; ambos tienen 2 páginas A4 apaisadas
 sin recortes ni solapamientos.
 
-**Próximo paso al retomar**: verificar el último deploy de Pages y el reporte en
-producción. La recomendación para el aviso Node 20 de Actions es
+**Próximo paso al retomar**: revisar y, si el usuario lo solicita, publicar la
+guia de indicadores junto con el nuevo README y sus assets. La recomendación
+para el aviso Node 20 de Actions es
 actualizar `checkout`/`setup-node` y el build a Node 24 en un cambio separado;
 mantener las majors oficiales actuales de las actions de Pages hasta que GitHub
 publique reemplazos Node 24. No se modificó el workflow en esta sesión.
@@ -45,6 +51,41 @@ publique reemplazos Node 24. No se modificó el workflow en esta sesión.
 ---
 
 ## Historial de sesiones
+
+### 2026-07-26 — README editorial y arquitectura visual
+
+**Objetivo**: reemplazar la documentacion generica por una entrada coherente con
+el centro de mando y util para lectores operativos y tecnicos.
+
+**Hecho**:
+- Cabecera SVG propia con la reticula y paleta ENEL·LUZ.
+- Narrativa organizada en ocho modulos numerados: proposito, vistas,
+  arquitectura, integridad, tecnologia, desarrollo, publicacion y licencia.
+- Capturas reales del mapa, indicadores con guia, graficos, diagnostico y
+  primera pagina del reporte.
+- Diagramas Mermaid del pipeline Enel -> espejo -> Pages y del flujo interno
+  loader -> modelo -> store -> alcance -> visualizaciones/reporte.
+- Script `scripts/readme-shots.mjs` para regenerar los assets sin mockups.
+
+**Validacion**:
+- SVG parseado como XML valido; rutas y assets del README verificados.
+- Build Vite y smoke E2E: OK.
+- Capturas de indicadores y reporte inspeccionadas visualmente.
+
+### 2026-07-26 — Guia de indicadores operativos
+
+**Objetivo**: eliminar la ambiguedad de la matriz operacional del dashboard.
+
+**Hecho**:
+- Encabezado propio y guia siempre visible para los seis indicadores.
+- Definiciones de ventana temporal, signo, percentiles, ETA y eventos sin ETA.
+- Nota metodologica sobre alcance activo y deduplicacion por ID.
+- Reticula 2 x 3 en escritorio y una columna en mobile, sin tooltips obligatorios.
+
+**Validacion**:
+- Vitest 17/17, `tsc --noEmit`, build Vite y smoke E2E: OK.
+- Revision visual local en escritorio y mobile: seis definiciones legibles y
+  sin recortes; la reticula mobile resolvio una columna de 346 px.
 
 ### 2026-07-26 — Legibilidad y mapa operacional del reporte
 

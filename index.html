@@ -79,7 +79,46 @@
                 <button id="scope-clear" class="hidden" type="button">VER RM</button>
               </div>
             </div>
-            <div id="ops-indicators" aria-label="Indicadores operativos"></div>
+            <section id="ops-panel" aria-labelledby="ops-panel-title">
+              <div class="ops-panel-head">
+                <h3 id="ops-panel-title">INDICADORES OPERATIVOS</h3>
+                <span>LECTURA DEL SNAPSHOT ACTIVO</span>
+              </div>
+              <div id="ops-indicators" aria-label="Valores de los indicadores operativos"></div>
+              <div id="ops-guide" aria-labelledby="ops-guide-title">
+                <div class="ops-guide-head">
+                  <strong id="ops-guide-title">COMO LEER</strong>
+                  <span>LOS VALORES CAMBIAN CON EL ALCANCE</span>
+                </div>
+                <dl class="ops-definitions">
+                  <div class="ops-definition">
+                    <dt><span>01</span>PRESION 60M</dt>
+                    <dd>Avisos de clientes e inicios de eventos registrados durante los ultimos 60 minutos.</dd>
+                  </div>
+                  <div class="ops-definition">
+                    <dt><span>02</span>VS HORA PREVIA</dt>
+                    <dd>Diferencia frente a los 60 minutos anteriores. Positivo: aumenta; negativo: disminuye.</dd>
+                  </div>
+                  <div class="ops-definition">
+                    <dt><span>03</span>EDAD P50</dt>
+                    <dd>Mediana de antiguedad: la mitad de los eventos lleva menos tiempo y la otra mitad, mas.</dd>
+                  </div>
+                  <div class="ops-definition">
+                    <dt><span>04</span>EDAD P90</dt>
+                    <dd>Antiguedad bajo la cual esta el 90% de los eventos; revela la cola mas antigua.</dd>
+                  </div>
+                  <div class="ops-definition">
+                    <dt><span>05</span>ETA VENCIDAS</dt>
+                    <dd>Eventos cuya hora estimada de reposicion ya paso y requieren una nueva estimacion.</dd>
+                  </div>
+                  <div class="ops-definition">
+                    <dt><span>06</span>SIN ETA</dt>
+                    <dd>Eventos activos que no publican una fecha estimada de reposicion.</dd>
+                  </div>
+                </dl>
+                <p class="ops-method">EVENTO = incidencia o descargo deduplicado por ID. Todo se calcula sobre la RM, comuna o area dibujada activa.</p>
+              </div>
+            </section>
             <div class="chart-block">
               <h3 class="chart-title">Impacto comunal <span class="legend-inline">clientes · % local <i class="sw sw-green"></i> <i class="sw sw-amber"></i> <i class="sw sw-orange"></i> <i class="sw sw-red"></i></span></h3>
               <div class="chart tall" id="chart-comunas"></div>
