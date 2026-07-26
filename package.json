@@ -4,10 +4,10 @@
   "version": "0.1.0",
   "description": "Centro independiente de control de cortes de energia en la RM, 100% client-side",
   "author": "geoidegeoidal",
-  "homepage": "https://geoidegeoidal.github.io/enel-luz/",
+  "homepage": "https://geoidegeoidal.github.io/luz-rm/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/geoidegeoidal/enel-luz.git"
+    "url": "https://github.com/geoidegeoidal/luz-rm.git"
   },
   "license": "MIT",
   "type": "module",

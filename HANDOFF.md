@@ -27,8 +27,10 @@ datos y la aplicación declara expresamente que es un proyecto independiente.
 La licencia MIT ahora identifica a `geoidegeoidal` como titular. `NOTICE.md`
 separa el código propio de datos operativos, marcas, cartografía, servicios,
 tipografías y dependencias de terceros. El footer enlaza los avisos legales.
-El slug técnico `enel-luz` y la URL de Pages se conservaron para no romper
-enlaces ni el deploy.
+El usuario renombró posteriormente el repositorio a `luz-rm`. La URL activa de
+Pages es `https://geoidegeoidal.github.io/luz-rm/`; la ruta anterior devuelve
+404. El proyecto usa `base: './'`, por lo que los assets son portables y solo
+requieren actualizar enlaces, metadatos y remote.
 
 Durante la revisión PDF se detectó que Enel puede publicar varias geometrías con
 el mismo nombre de comuna (caso COLINA). El cross-filter, los KPIs, el ranking y
@@ -40,8 +42,9 @@ identidad, aviso legal, reportes RM/comuna, mapa, geoprocesos y exportación.
 Las capturas reales del README y su cabecera SVG se regeneraron e inspeccionaron
 con la marca LUZ·RM.
 
-**Próximo paso al retomar**: revisar y, si el usuario lo solicita, publicar el
-rebranding y los avisos legales. La inscripción de software ante el DDI no se
+**Próximo paso al retomar**: publicar, si el usuario lo solicita, la actualización
+de referencias posterior al rename del repositorio. La inscripción de software
+ante el DDI no se
 realizó: es facultativa y requiere datos personales, declaración de participantes
 y una actuación del titular. La recomendación para el aviso Node 20 de Actions es
 actualizar `checkout`/`setup-node` y el build a Node 24 en un cambio separado;
@@ -51,6 +54,22 @@ publique reemplazos Node 24. No se modificó el workflow en esta sesión.
 ---
 
 ## Historial de sesiones
+
+### 2026-07-26 — Rename técnico del repositorio
+
+**Objetivo**: adaptar el checkout y los enlaces al cambio
+`geoidegeoidal/enel-luz` -> `geoidegeoidal/luz-rm`.
+
+**Hecho**:
+- URL de Pages, README, metadata npm y enlace legal actualizados.
+- Remote local apuntado al nuevo repositorio.
+- Identidad del bot de snapshots actualizada a `luz-rm-bot`.
+- `vite.config.ts` auditado: `base: './'` evita cambios de rutas de assets.
+
+**Verificación**:
+- Nuevo Pages responde 200 con LUZ·RM.
+- La URL antigua de Pages responde 404.
+- GitHub mantiene Pages con `build_type: workflow` sobre `main`.
 
 ### 2026-07-26 — Identidad neutral y alcance de licencias
 
@@ -65,8 +84,8 @@ de datos y aclarar qué materiales cubre la licencia MIT.
 - Aviso persistente y enlace legal en el footer.
 - IDs de estilos, paquete, salida PDF y almacenamiento de tema neutralizados;
   la preferencia guardada con la clave anterior se migra como fallback.
-- Slug `enel-luz` conservado exclusivamente como identificador técnico de
-  repositorio y ruta de Pages.
+- El slug `enel-luz` se conservó inicialmente; posteriormente el usuario
+  renombró el repositorio a `luz-rm`.
 
 **Validación**:
 - Vitest 17/17, TypeScript, build y smoke E2E: OK.
@@ -246,7 +265,7 @@ GitHub disponible para controlar los repositorios del usuario.
 - Actions verificado: el run `30194732878` actualizó datos a `b95b2b3`, construyó
   el artefacto desde ese commit y desplegó Pages con éxito.
 - Plugin/conector GitHub ya estaba instalado y conectado como `geoidegeoidal`;
-  acceso a `geoidegeoidal/enel-luz` confirmado con permisos admin/maintain/
+  acceso a `geoidegeoidal/luz-rm` confirmado con permisos admin/maintain/
   pull/push/triage. GitHub CLI también está autenticado con scopes
   `repo` y `workflow`.
 
@@ -306,7 +325,7 @@ GitHub disponible para controlar los repositorios del usuario.
 - Ninguno. Smoke test pasó limpio. Errores en log del smoke son tiles OpenFreeMap intermitentes (preexistente, no relacionado).
 
 **Próxima sesión**:
-- Sanity check en producción (https://geoidegeoidal.github.io/enel-luz/) post-deploy: verificar que el badge "hace Xs" arranque verde, que el spin del botón funcione, y que volviendo de un tab inactivo >10min se dispare el refresh solo.
+- Sanity check en producción (https://geoidegeoidal.github.io/luz-rm/) post-deploy: verificar que el badge "hace Xs" arranque verde, que el spin del botón funcione, y que volviendo de un tab inactivo >10min se dispare el refresh solo.
 - Si se observa que el toast de "actualizado" es molesto en sesiones largas con updates cada 5min, considerar bajarlo a solo flash de la barra + badge verde (sin toast).
 
 **Commits relevantes**: pendiente commit (usuario no pidió commit explícito). Cambios en `index.html`, `src/style.css`, `src/main.ts`.

@@ -16,7 +16,7 @@ Visor de "control de mando" 100% client-side, open source (MIT), deployado en
 GitHub Pages. Proyecto **independiente**, sin afiliación con Enel. La palabra
 “Enel” se usa únicamente para identificar la fuente de datos.
 
-- Repo: `enel-luz` (público)
+- Repo: `luz-rm` (público)
 - Producción: GitHub Pages (deploy vía GitHub Actions)
 - Usuario GitHub: `geoidegeoidal`
 

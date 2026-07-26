@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://geoidegeoidal.github.io/enel-luz/"><strong>ABRIR CENTRO DE CONTROL ↗</strong></a>
+  <a href="https://geoidegeoidal.github.io/luz-rm/"><strong>ABRIR CENTRO DE CONTROL ↗</strong></a>
   &nbsp;·&nbsp;
   <a href="#puesta-en-marcha">EJECUTAR LOCALMENTE</a>
   &nbsp;·&nbsp;
