@@ -17,18 +17,18 @@
 
 ## Sesión actual / próxima
 
-**Estado**: el reporte operativo RM/comuna exportable a PDF quedó validado y su
-publicación directa en `main` fue autorizada por el usuario. El lenguaje visual se
-guardó en `.interface-design/system.md`. La plantilla usa dos páginas A4
-apaisadas, mapa SVG operacional, KPIs, indicadores, reloj ±12 h, escala ETA,
-tablas de prioridad, timestamp, frescura y nota metodológica. Tras feedback del
-usuario se elevó la escala tipográfica y el mapa ahora superpone incidencias
-activas como rombos naranjas y avisos como puntos cian, con leyenda cuantificada.
-Posteriormente se agrego localmente una guia persistente para explicar los seis
-indicadores operativos del dashboard. El README tambien fue reconstruido como
-portada editorial del centro de mando, con capturas reales actuales, definiciones
-de indicadores y dos diagramas Mermaid de arquitectura. Estos ajustes aun no
-tienen commit.
+**Estado**: la guia persistente de indicadores y el README editorial fueron
+publicados en `main` mediante `d610139`. Después, a solicitud del usuario, se
+aplicó localmente una separación completa entre identidad y procedencia:
+`LUZ·RM` reemplaza a `ENEL·LUZ` como marca visible en masthead, metadatos,
+reporte, README y capturas. “Enel” queda limitado a identificar la fuente de
+datos y la aplicación declara expresamente que es un proyecto independiente.
+
+La licencia MIT ahora identifica a `geoidegeoidal` como titular. `NOTICE.md`
+separa el código propio de datos operativos, marcas, cartografía, servicios,
+tipografías y dependencias de terceros. El footer enlaza los avisos legales.
+El slug técnico `enel-luz` y la URL de Pages se conservaron para no romper
+enlaces ni el deploy.
 
 Durante la revisión PDF se detectó que Enel puede publicar varias geometrías con
 el mismo nombre de comuna (caso COLINA). El cross-filter, los KPIs, el ranking y
@@ -36,14 +36,14 @@ el reporte ahora combinan todas las geometrías, suman clientes afectados y usan
 `CLIENTESTOTAL` una sola vez.
 
 **Validación final**: Vitest 17/17, `tsc --noEmit`, build Vite y smoke E2E con
-reportes RM/comuna. Se generaron y revisaron visualmente cuatro páginas reales:
-`output/pdf/enel-luz-reporte-rm.pdf` y
-`output/pdf/enel-luz-reporte-colina.pdf`; ambos tienen 2 páginas A4 apaisadas
-sin recortes ni solapamientos.
+identidad, aviso legal, reportes RM/comuna, mapa, geoprocesos y exportación.
+Las capturas reales del README y su cabecera SVG se regeneraron e inspeccionaron
+con la marca LUZ·RM.
 
-**Próximo paso al retomar**: revisar y, si el usuario lo solicita, publicar la
-guia de indicadores junto con el nuevo README y sus assets. La recomendación
-para el aviso Node 20 de Actions es
+**Próximo paso al retomar**: revisar y, si el usuario lo solicita, publicar el
+rebranding y los avisos legales. La inscripción de software ante el DDI no se
+realizó: es facultativa y requiere datos personales, declaración de participantes
+y una actuación del titular. La recomendación para el aviso Node 20 de Actions es
 actualizar `checkout`/`setup-node` y el build a Node 24 en un cambio separado;
 mantener las majors oficiales actuales de las actions de Pages hasta que GitHub
 publique reemplazos Node 24. No se modificó el workflow en esta sesión.
@@ -51,6 +51,27 @@ publique reemplazos Node 24. No se modificó el workflow en esta sesión.
 ---
 
 ## Historial de sesiones
+
+### 2026-07-26 — Identidad neutral y alcance de licencias
+
+**Objetivo**: evitar que el nombre del producto sugiera afiliación con la fuente
+de datos y aclarar qué materiales cubre la licencia MIT.
+
+**Hecho**:
+- Marca pública `LUZ·RM` en aplicación, reporte, README, SVG y metadatos.
+- Titular MIT corregido a `geoidegeoidal`.
+- `NOTICE.md` con alcance del código propio, marcas, datos, mapas,
+  geocodificación, fuentes y dependencias.
+- Aviso persistente y enlace legal en el footer.
+- IDs de estilos, paquete, salida PDF y almacenamiento de tema neutralizados;
+  la preferencia guardada con la clave anterior se migra como fallback.
+- Slug `enel-luz` conservado exclusivamente como identificador técnico de
+  repositorio y ruta de Pages.
+
+**Validación**:
+- Vitest 17/17, TypeScript, build y smoke E2E: OK.
+- Capturas de dashboard, indicadores, gráficos, diagnóstico y reporte
+  regeneradas; cabecera SVG renderizada e inspeccionada.
 
 ### 2026-07-26 — README editorial y arquitectura visual
 

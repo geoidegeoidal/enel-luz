@@ -1,8 +1,14 @@
 {
-  "name": "enel-luz",
+  "name": "luz-rm",
   "private": false,
   "version": "0.1.0",
-  "description": "Visor de control de mando de cortes de energia Enel Chile - 100% client-side, flat design",
+  "description": "Centro independiente de control de cortes de energia en la RM, 100% client-side",
+  "author": "geoidegeoidal",
+  "homepage": "https://geoidegeoidal.github.io/enel-luz/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/geoidegeoidal/enel-luz.git"
+  },
   "license": "MIT",
   "type": "module",
   "scripts": {

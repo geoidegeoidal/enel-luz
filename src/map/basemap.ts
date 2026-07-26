@@ -174,18 +174,18 @@ const LIGHT_PALETTE: FlatPalette = {
 }
 
 export function flatDarkStyle(): StyleSpecification {
-  return flatVectorStyle(DARK_PALETTE, 'enel-luz-flat-dark')
+  return flatVectorStyle(DARK_PALETTE, 'luz-rm-flat-dark')
 }
 
 export function flatLightStyle(): StyleSpecification {
-  return flatVectorStyle(LIGHT_PALETTE, 'enel-luz-flat-light')
+  return flatVectorStyle(LIGHT_PALETTE, 'luz-rm-flat-light')
 }
 
 /** Satelite: Esri World Imagery + capa de referencia (limites y lugares) */
 export function satelliteStyle(): StyleSpecification {
   return {
     version: 8,
-    name: 'enel-luz-satellite',
+    name: 'luz-rm-satellite',
     glyphs: GLYPHS,
     sources: {
       sat: {

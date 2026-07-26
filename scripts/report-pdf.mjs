@@ -6,7 +6,7 @@ import puppeteer from 'puppeteer-core'
 const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
 const PAGE_URL = process.argv[2] ?? 'http://localhost:4173/'
 const SCOPE = process.argv[3] ?? 'RM'
-const OUTPUT = process.argv[4] ?? './output/pdf/enel-luz-reporte-rm.pdf'
+const OUTPUT = process.argv[4] ?? './output/pdf/luz-rm-reporte-rm.pdf'
 
 await mkdir(dirname(OUTPUT), { recursive: true })
 

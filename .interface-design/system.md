@@ -1,4 +1,4 @@
-# ENEL·LUZ - Sistema visual
+# LUZ·RM - Sistema visual
 
 ## Direccion
 
@@ -140,6 +140,17 @@ se separan por papel/panel y lineas.
   `scripts/readme-shots.mjs`; nunca documentar paneles con mockups.
 - Diagramas Mermaid usan los mismos colores semanticos: carbon para nucleo,
   rojo para alcance/accion, cian para datos y verde para publicacion.
+
+### Identidad y procedencia
+
+- Marca publica: `LUZ·RM`. No usar nombres de proveedores de datos dentro del
+  lockup, titulo del producto, metadatos sociales ni encabezado del reporte.
+- `Enel Chile` aparece solo como procedencia del snapshot y nunca como aval,
+  afiliacion, patrocinio o titular de la interfaz.
+- Aviso corto obligatorio: `PROYECTO INDEPENDIENTE · ENEL SOLO IDENTIFICA LA
+  FUENTE`.
+- La identidad visual propia conserva el simbolo electrico geometrico, la
+  reticula, el reloj `AHORA` y la paleta semantica.
 
 ## Movimiento y estados
 

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/readme-header.svg" width="100%" alt="ENEL·LUZ — Centro de control de cortes de energía">
+  <img src="assets/readme-header.svg" width="100%" alt="LUZ·RM — Centro de control de cortes de energía">
 </p>
 
 <p align="center">
@@ -16,7 +16,7 @@
 </p>
 
 > [!IMPORTANT]
-> **Proyecto no oficial y sin afiliación con Enel.** Los datos provienen de los GeoJSON públicos que alimentan el mapa de emergencia de Enel Chile. El espejo automático es _best-effort_: la hora **DATOS** de la interfaz indica la publicación efectiva del snapshot.
+> **Proyecto independiente y sin afiliación con Enel.** “Enel” identifica únicamente la fuente de los datos operativos. Los GeoJSON alimentan el mapa de emergencia de Enel Chile y el espejo automático es _best-effort_: la hora **DATOS** de la interfaz indica la publicación efectiva del snapshot.
 
 ---
 
@@ -37,7 +37,7 @@ La aplicación no es solamente un mapa de polígonos. Convierte el snapshot acti
 
 La vista principal une la banda KPI, el mapa MapLibre, el gestor de capas y el panorama analítico. Los polígonos representan severidad comunal; las incidencias, descargos y avisos siguen disponibles como capas operativas independientes.
 
-<img src="assets/final_initial.png" width="100%" alt="Vista general del centro de control ENEL·LUZ">
+<img src="assets/final_initial.png" width="100%" alt="Vista general del centro de control LUZ·RM">
 
 ### Indicadores con definición visible
 
@@ -222,10 +222,16 @@ node scripts/readme-shots.mjs http://localhost:4173/
 
 ## 08 · Licencia y atribuciones
 
-Código bajo licencia [MIT](LICENSE).
+El código original de **LUZ·RM** se distribuye bajo licencia [MIT](LICENSE),
+con copyright de `geoidegeoidal`. MIT permite usar, modificar, redistribuir y
+comercializar el código conservando el aviso de copyright y la licencia.
+
+La licencia MIT del repositorio **no relicencia** datos, marcas, cartografía,
+tipografías, servicios externos ni dependencias. Sus titulares y condiciones se
+detallan en [NOTICE.md](NOTICE.md).
 
 - Datos de cortes: Enel Chile.
 - Cartografía: © OpenStreetMap contributors, OpenMapTiles, OpenFreeMap y Esri, según la capa utilizada.
 - Geocoding: Photon y Nominatim.
 
-**ENEL·LUZ es un proyecto independiente, abierto y no oficial.**
+**LUZ·RM es un proyecto independiente, abierto y no oficial. Enel solo identifica la fuente de datos.**

@@ -97,6 +97,8 @@ export type UiMode = 'light' | 'dark'
 
 /** Paleta UI activa (mutable: los graficos la leen en cada render) */
 export const ui: UiPalette = { ...UI_LIGHT }
+const UI_STORAGE_KEY = 'luz-rm-ui'
+const LEGACY_UI_STORAGE_KEY = 'enel-luz-ui'
 
 /** Inyecta las custom properties CSS en :root */
 export function applyTheme(): void {
@@ -115,7 +117,10 @@ export function applyTheme(): void {
     'map-bg': theme.map.bg,
   }
   for (const [k, v] of Object.entries(statics)) r.setProperty(`--${k}`, v)
-  applyUiMode((localStorage.getItem('enel-luz-ui') as UiMode) ?? 'light')
+  const stored =
+    (localStorage.getItem(UI_STORAGE_KEY) as UiMode | null) ??
+    (localStorage.getItem(LEGACY_UI_STORAGE_KEY) as UiMode | null)
+  applyUiMode(stored ?? 'light')
 }
 
 /** Cambia el modo claro/oscuro del chrome de la app */
@@ -132,7 +137,7 @@ export function applyUiMode(mode: UiMode): void {
   r.setProperty('--focus', p.focus)
   r.setProperty('--masthead', p.masthead)
   document.documentElement.dataset.ui = mode
-  localStorage.setItem('enel-luz-ui', mode)
+  localStorage.setItem(UI_STORAGE_KEY, mode)
 }
 
 export type BasemapMode = 'dark' | 'light' | 'sat'

@@ -10,9 +10,11 @@
 
 ## Qué es esto
 
-**ENEL·LUZ — Centro de control de cortes de energía** (Enel Chile, zona RM).
+**LUZ·RM — Centro de control de cortes de energía** (zona RM; datos operativos
+publicados por Enel Chile).
 Visor de "control de mando" 100% client-side, open source (MIT), deployado en
-GitHub Pages. Proyecto **NO oficial**, sin afiliación con Enel.
+GitHub Pages. Proyecto **independiente**, sin afiliación con Enel. La palabra
+“Enel” se usa únicamente para identificar la fuente de datos.
 
 - Repo: `enel-luz` (público)
 - Producción: GitHub Pages (deploy vía GitHub Actions)

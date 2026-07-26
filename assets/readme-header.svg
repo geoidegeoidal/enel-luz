@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1680" height="360" viewBox="0 0 1680 360" role="img" aria-labelledby="title desc">
-  <title id="title">ENEL·LUZ — Centro de control de cortes</title>
+  <title id="title">LUZ·RM — Centro de control de cortes</title>
   <desc id="desc">Cabecera editorial inspirada en el panel operativo, con seis módulos de estado.</desc>
   <rect width="1680" height="360" fill="#f2f0e9"/>
   <rect width="1680" height="8" fill="#e4002b"/>
@@ -18,7 +18,7 @@
   <g font-family="Arial, Helvetica, sans-serif" fill="#ffffff">
     <rect x="48" y="52" width="64" height="64" fill="#e4002b"/>
     <path d="M85 63 66 91h15l-8 20 25-31H84z" fill="#ffffff"/>
-    <text x="140" y="89" font-size="42" font-weight="700" letter-spacing="1">ENEL·LUZ</text>
+    <text x="140" y="89" font-size="42" font-weight="700" letter-spacing="1">LUZ·RM</text>
     <text x="142" y="116" font-size="15" letter-spacing="6" fill="#d8d5cb">CENTRO DE CONTROL DE CORTES</text>
     <text x="48" y="172" font-size="20" font-weight="700" letter-spacing="3">REGIÓN METROPOLITANA · SNAPSHOT OPERATIVO</text>
     <text x="1268" y="72" font-size="15" font-weight="700" letter-spacing="2">PROYECTO OPEN SOURCE</text>

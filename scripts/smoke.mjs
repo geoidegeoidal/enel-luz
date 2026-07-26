@@ -70,6 +70,20 @@ console.log('ready:', ready)
 assert(ready, 'la aplicación no alcanzó el estado listo')
 await sleep(2500)
 
+const identity = await page.evaluate(() => ({
+  brand: document.querySelector('.brand-name')?.textContent?.trim(),
+  title: document.title,
+  footer: document.querySelector('#footer')?.textContent ?? '',
+  notice: document.querySelector('#footer a')?.getAttribute('href') ?? '',
+}))
+assert(identity.brand === 'LUZ·RM', 'la marca neutral no aparece en el masthead')
+assert(identity.title.startsWith('LUZ·RM'), 'el titulo del documento conserva la marca anterior')
+assert(
+  identity.footer.includes('ENEL SOLO IDENTIFICA LA FUENTE') &&
+    identity.notice.endsWith('/NOTICE.md'),
+  'el aviso de procedencia o el enlace legal no estan visibles',
+)
+
 const mapState = await page.evaluate(() => window.__mapDebug?.())
 console.log('mapState.rendered:', mapState?.rendered, '| comunas:', mapState?.comunasRendered)
 assert(mapState?.layers?.includes('ly-comunas-fill'), 'faltan capas de datos')
@@ -128,6 +142,8 @@ const regionalReport = await page.evaluate(() => ({
   ).length,
   mapLegend: document.querySelector('#report-root .report-map-legend')?.textContent,
   printLabel: document.querySelector('#report-print')?.textContent?.trim(),
+  brand: document.querySelector('#report-root .report-brand strong')?.textContent?.trim(),
+  disclaimer: document.querySelector('#report-root .report-foot')?.textContent ?? '',
 }))
 assert(regionalReport.pages === 2, 'el reporte RM no tiene dos paginas')
 assert(regionalReport.scope?.includes('RM'), 'el reporte RM no declara su alcance')
@@ -141,6 +157,11 @@ assert(
 assert(
   regionalReport.printLabel === 'IMPRIMIR / GUARDAR PDF',
   'el reporte no ofrece exportacion PDF',
+)
+assert(
+  regionalReport.brand === 'LUZ·RM' &&
+    regionalReport.disclaimer.includes('ENEL SOLO IDENTIFICA LA FUENTE'),
+  'el reporte no usa la identidad neutral o no declara la procedencia',
 )
 await page.click('#report-close')
 await page.evaluate((nombre) => window.__selectComunaDebug?.(nombre), mapState?.firstComuna)

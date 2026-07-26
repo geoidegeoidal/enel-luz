@@ -512,7 +512,7 @@ function pageHeader(model: ReportModel, section: string): string {
   return `<header class="report-head">
     <div class="report-brand">
       <span class="report-bolt" aria-hidden="true">ϟ</span>
-      <span><strong>ENEL·LUZ</strong><small>CENTRO DE CONTROL DE CORTES</small></span>
+      <span><strong>LUZ·RM</strong><small>CENTRO DE CONTROL DE CORTES</small></span>
     </div>
     <div class="report-section">
       <span>REPORTE OPERATIVO</span>
@@ -529,7 +529,7 @@ function pageHeader(model: ReportModel, section: string): string {
 function pageFooter(page: number): string {
   return `<footer class="report-foot">
     <span>FUENTE: GeoJSON publicos de mapaemergencia.enel.com, espejo automatico best-effort.</span>
-    <span>PROYECTO OPEN SOURCE NO OFICIAL · SIN AFILIACION CON ENEL</span>
+    <span>LUZ·RM · PROYECTO INDEPENDIENTE · ENEL SOLO IDENTIFICA LA FUENTE</span>
     <strong>${String(page).padStart(2, '0')} / 02</strong>
   </footer>`
 }

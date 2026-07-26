@@ -495,7 +495,7 @@ const KPI_DEFS: KpiDef[] = [
     label: 'Comunas afectadas',
     valueClass: 'v-green',
     fmt: fmtNum,
-    context: () => 'concesion Enel RM',
+    context: () => 'zona de concesion RM',
   },
 ]
 
